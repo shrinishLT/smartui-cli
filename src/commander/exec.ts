@@ -63,6 +63,7 @@ command
             await tasks.run(ctx);
         } catch (error) {
             ctx.log.info('\nRefer docs: https://www.lambdatest.com/support/docs/smart-visual-regression-testing/');
+            throw new Error();
         }
     })
 

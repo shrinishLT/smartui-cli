@@ -2,6 +2,8 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import chalk from 'chalk';
 import { updateLogContext } from '../lib/logger.js';
+import { startPollingForTunnel } from '../lib/utils.js';
+import { startTunnelBinary } from '../lib/utils.js';
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
@@ -9,7 +11,18 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
         task: async (ctx, task): Promise<void> => {
             updateLogContext({task: 'createBuild'});
 
+            let errorCode = 0;
             try {
+                if (ctx.config.tunnel) {
+                    try {
+                        await startTunnelBinary(ctx);
+                    } catch (error: any) {
+                        ctx.log.debug(`Error starting the tunnel: ${error.message}`);
+                        errorCode = 1; 
+                        throw new Error(`Error while starting tunnel binary`);
+                    }
+                }
+
                 if (ctx.authenticatedInitially && !ctx.config.skipBuildCreation) {
                     let resp = await ctx.client.createBuild(ctx.git, ctx.config, ctx.log, ctx.build.name, ctx.isStartExec);
                     ctx.build = {
@@ -32,7 +45,13 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
 
                 if (ctx.config.tunnel) {
-                    let tunnelResp = await ctx.client.getTunnelDetails(ctx.config.tunnelName, ctx.log);
+                    if (ctx.build && ctx.build.id) {
+                        startPollingForTunnel(ctx, '', false, '');
+                    }
+                }
+
+                if (ctx.config.tunnel) {
+                    let tunnelResp = await ctx.client.getTunnelDetails(ctx, ctx.log);
                     ctx.log.debug(`Tunnel Response: ${JSON.stringify(tunnelResp)}`)
                     if (tunnelResp && tunnelResp.data && tunnelResp.data.host && tunnelResp.data.port && tunnelResp.data.tunnel_name) {
                         ctx.tunnelDetails = {
@@ -53,8 +72,13 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
             } catch (error: any) {
                 ctx.log.debug(error);
-                task.output = chalk.gray(error.message);
-                throw new Error('SmartUI build creation failed');
+                if (errorCode === 1) {
+                    task.output = chalk.gray(error.message);
+                    throw new Error('Skipped SmartUI build creation');
+                } else {
+                    task.output = chalk.gray(error.message);
+                    throw new Error('SmartUI build creation failed');
+                }
             }
         },
         rendererOptions: { persistentOutput: true }

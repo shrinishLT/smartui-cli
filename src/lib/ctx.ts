@@ -1,4 +1,4 @@
-import { Context, Env, WebConfig, MobileConfig, basicAuth } from '../types.js'
+import { Context, Env, WebConfig, MobileConfig, basicAuth, tunnelConfig } from '../types.js'
 import constants from './constants.js'
 import { version } from '../../package.json'
 import { validateConfig } from './schemaValidation.js'
@@ -12,6 +12,7 @@ export default (options: Record<string, string>): Context => {
     let webConfig: WebConfig;
     let mobileConfig: MobileConfig;
     let basicAuthObj: basicAuth
+    let tunnelObj: tunnelConfig
     let config = constants.DEFAULT_CONFIG;
     let port: number;
     let resolutionOff: boolean;
@@ -77,7 +78,10 @@ export default (options: Record<string, string>): Context => {
     }
     if (config.basicAuthorization) {
         basicAuthObj = config.basicAuthorization
-    }   
+    }
+    if (config.tunnel) {
+        tunnelObj = config.tunnel
+    }
 
     return {
         env: env,
@@ -100,7 +104,7 @@ export default (options: Record<string, string>): Context => {
             useGlobalCache: config.useGlobalCache ?? false,
             ignoreHTTPSErrors: config.ignoreHTTPSErrors ?? false,
             skipBuildCreation: config.skipBuildCreation ?? false,
-            tunnel: config.tunnel ?? false,
+            tunnel: tunnelObj,
             tunnelName: config.tunnelName || ''
         },
         uploadFilePath: '',
@@ -143,6 +147,8 @@ export default (options: Record<string, string>): Context => {
         isSnapshotCaptured: false,
         sessionCapabilitiesMap: new Map<string, any[]>(),
         buildToSnapshotCountMap: new Map<string, number>(),
-        fetchResultsForBuild: new Array<string>
+        fetchResultsForBuild: new Array<string>,
+        orgId: 0,
+        userId: 0
     }
 }
