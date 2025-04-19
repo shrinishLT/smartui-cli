@@ -196,6 +196,10 @@ const ConfigSchema = {
             type: "string",
             errorMessage: "Invalid config; tunnelName must be string"
         },
+        userAgent: {
+            type: "string",
+            errorMessage: "Invalid config; userAgent must be string"
+        },
     },
     anyOf: [
         { required: ["web"] },

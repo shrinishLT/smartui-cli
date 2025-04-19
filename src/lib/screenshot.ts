@@ -16,12 +16,12 @@ async function captureScreenshotsForConfig(
 ): Promise<void> {
     ctx.log.debug(`*** urlConfig  ${JSON.stringify(urlConfig)}`);
 
-    let {name, url, waitForTimeout, execute, pageEvent} = urlConfig;
+    let {name, url, waitForTimeout, execute, pageEvent, userAgent} = urlConfig;
     let afterNavigationScript = execute?.afterNavigation;
     let beforeSnapshotScript = execute?.beforeSnapshot;
     let waitUntilEvent = pageEvent || process.env.SMARTUI_PAGE_WAIT_UNTIL_EVENT || 'load';
 
-    let pageOptions = { waitUntil: waitUntilEvent, timeout: ctx.config.waitForPageRender || constants.DEFAULT_PAGE_LOAD_TIMEOUT };
+    let pageOptions = { waitUntil: waitUntilEvent, timeout: ctx.config.waitForPageRender || constants.DEFAULT_PAGE_LOAD_TIMEOUT , userAgent : ctx.config.userAgent};
     ctx.log.debug(`url:  ${url}  pageOptions: ${JSON.stringify(pageOptions)}`);
     let ssId = name.toLowerCase().replace(/\s/g, '_');
     let context: BrowserContext;
@@ -31,6 +31,12 @@ async function captureScreenshotsForConfig(
     else if (browserName == constants.FIREFOX) contextOptions.userAgent = constants.FIREFOX_USER_AGENT;
     else if (browserName == constants.SAFARI) contextOptions.userAgent = constants.SAFARI_USER_AGENT;
     else if (browserName == constants.EDGE) contextOptions.userAgent = constants.EDGE_USER_AGENT;
+    else {
+        contextOptions.userAgent = pageOptions.userAgent;
+        if(pageOptions.userAgent === null) {
+            contextOptions.userAgent = userAgent;
+        }
+    }
 
     try {
         const browser = browsers[browserName];
