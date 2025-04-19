@@ -21,7 +21,7 @@ async function captureScreenshotsForConfig(
     let beforeSnapshotScript = execute?.beforeSnapshot;
     let waitUntilEvent = pageEvent || process.env.SMARTUI_PAGE_WAIT_UNTIL_EVENT || 'load';
 
-    let pageOptions = { waitUntil: waitUntilEvent, timeout: ctx.config.waitForPageRender || constants.DEFAULT_PAGE_LOAD_TIMEOUT , userAgent : ctx.config.userAgent};
+    let pageOptions = { waitUntil: waitUntilEvent, timeout: ctx.config.waitForPageRender || constants.DEFAULT_PAGE_LOAD_TIMEOUT};
     ctx.log.debug(`url:  ${url}  pageOptions: ${JSON.stringify(pageOptions)}`);
     let ssId = name.toLowerCase().replace(/\s/g, '_');
     let context: BrowserContext;
@@ -31,10 +31,10 @@ async function captureScreenshotsForConfig(
     else if (browserName == constants.FIREFOX) contextOptions.userAgent = constants.FIREFOX_USER_AGENT;
     else if (browserName == constants.SAFARI) contextOptions.userAgent = constants.SAFARI_USER_AGENT;
     else if (browserName == constants.EDGE) contextOptions.userAgent = constants.EDGE_USER_AGENT;
-    else {
-        contextOptions.userAgent = pageOptions.userAgent;
-        if(pageOptions.userAgent === null) {
-            contextOptions.userAgent = userAgent;
+    else if (ctx.config.userAgent || urlConfig.userAgent) {
+        contextOptions.userAgent = ctx.config.userAgent;
+        if (urlConfig.userAgent !== null) {
+            contextOptions.userAgent = urlConfig.userAgent;
         }
     }
 
