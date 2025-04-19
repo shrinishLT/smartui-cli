@@ -31,7 +31,8 @@ export default {
         {
             "name": "lambdatest-home-page",
             "url": "https://www.lambdatest.com",
-            "waitForTimeout": 1000
+            "waitForTimeout": 1000,
+            "userAgent" : ""
         },
         {
             "name": "example-page",

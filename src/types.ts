@@ -175,7 +175,8 @@ export interface MobileConfig {
 export type WebStaticConfig = Array<{
     name: string;
     url: string;
-    waitForTimeout?: number
+    waitForTimeout?: number;
+    userAgent?: string;
 }>;
 
 export type FigmaConfigItem = {
