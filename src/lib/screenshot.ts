@@ -31,10 +31,11 @@ async function captureScreenshotsForConfig(
     else if (browserName == constants.FIREFOX) contextOptions.userAgent = constants.FIREFOX_USER_AGENT;
     else if (browserName == constants.SAFARI) contextOptions.userAgent = constants.SAFARI_USER_AGENT;
     else if (browserName == constants.EDGE) contextOptions.userAgent = constants.EDGE_USER_AGENT;
-    if (ctx.config.userAgent || urlConfig.userAgent) {
+    if (ctx.config.userAgent || userAgent) {
         if(ctx.config.userAgent !== ""){
-        contextOptions.userAgent = ctx.config.userAgent;}
-        if (urlConfig.userAgent !== "") {
+        contextOptions.userAgent = ctx.config.userAgent;
+        }
+        if (urlConfig.userAgent !== "" && urlConfig.userAgent !== undefined) {
             contextOptions.userAgent = userAgent;
         }
     }
