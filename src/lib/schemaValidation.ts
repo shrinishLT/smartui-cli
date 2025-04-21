@@ -196,6 +196,10 @@ const ConfigSchema = {
             type: "string",
             errorMessage: "Invalid config; tunnelName must be string"
         },
+        userAgent: {
+            type: "string",
+            errorMessage: "Invalid config; userAgent must be string"
+        },
     },
     anyOf: [
         { required: ["web"] },
@@ -225,6 +229,10 @@ const WebStaticConfigSchema: JSONSchemaType<WebStaticConfig> = {
                 minimum: 0,
                 maximum: 30000,
                 errorMessage: "waitForTimeout must be > 0 and <= 30000"
+            },
+            userAgent: {
+                type: "string",
+                errorMessage: "User Agent value must be a valid string"
             },
             execute: {
                 type: "object",
