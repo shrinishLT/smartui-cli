@@ -388,7 +388,7 @@ export async function startTunnelBinary(ctx: Context) {
         tunnelArguments.tunnelName = randomTunnelName;
         ctx.config.tunnel.tunnelName = randomTunnelName
     }
-
+    
     ctx.log.debug(`tunnel config ${JSON.stringify(tunnelArguments)}`)
 
     if (ctx.config.tunnel?.type === 'auto') {

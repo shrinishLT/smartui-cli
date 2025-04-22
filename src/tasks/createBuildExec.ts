@@ -2,8 +2,7 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import chalk from 'chalk';
 import { updateLogContext } from '../lib/logger.js';
-import { startPollingForTunnel } from '../lib/utils.js';
-import { startTunnelBinary } from '../lib/utils.js';
+import { startTunnelBinary, startPollingForTunnel } from '../lib/utils.js';
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
@@ -16,10 +15,11 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 if (ctx.config.tunnel) {
                     try {
                         await startTunnelBinary(ctx);
+                        ctx.isStartExec = true;
                     } catch (error: any) {
                         ctx.log.debug(`Error starting the tunnel: ${error.message}`);
                         errorCode = 1; 
-                        throw new Error(`Error while starting tunnel binary`);
+                        throw new Error(`Error while starting tunnel binary: ${error.message}`);
                     }
                 }
 
