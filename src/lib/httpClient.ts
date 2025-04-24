@@ -219,19 +219,23 @@ export default class httpClient {
     }
 
     getTunnelDetails(ctx: Context, log: Logger) {
+        const data: any = { 
+            orgId: ctx.orgId,
+            userId: ctx.userId,
+            userName: ctx.config.tunnel?.user,
+            password: ctx.config.tunnel?.key
+        };
+    
+        if (ctx.config.tunnel?.tunnelName) {
+            data.tunnelName = ctx.config.tunnel.tunnelName;
+        }
+    
         return this.request({
             url: '/tunnel',
             method: 'POST',
-            data: { 
-                tunnelName: ctx.config.tunnel?.tunnelName,
-                orgId: ctx.orgId,
-                userId: ctx.userId,
-                userName: ctx.config.tunnel?.user,
-                password: ctx.config.tunnel?.key
-            }
-        }, log)
+            data: data
+        }, log);
     }
-    
 
     ping(buildId: string, log: Logger) {
         return this.request({

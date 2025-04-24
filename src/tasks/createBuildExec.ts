@@ -12,7 +12,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
 
             let errorCode = 0;
             try {
-                if (ctx.config.tunnel) {
+                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
                     try {
                         await startTunnelBinary(ctx);
                         ctx.isStartExec = true;
@@ -44,7 +44,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                     task.title = 'Skipped SmartUI build creation'
                 }
 
-                if (ctx.config.tunnel) {
+                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
                     if (ctx.build && ctx.build.id) {
                         startPollingForTunnel(ctx, '', false, '');
                     }
