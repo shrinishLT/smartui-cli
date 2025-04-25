@@ -91,6 +91,7 @@ export interface Env {
     PROJECT_NAME: string | undefined;
     SMARTUI_API_PROXY: string | undefined;
     SMARTUI_API_SKIP_CERTIFICATES: boolean;
+    USE_REMOTE_DISCOVERY: boolean;
 }
 
 export interface Snapshot {

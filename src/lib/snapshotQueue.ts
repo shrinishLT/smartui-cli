@@ -1,7 +1,7 @@
 import { access } from "fs";
 import { Snapshot, Context } from "../types.js";
 import constants from "./constants.js";
-import processSnapshot from "./processSnapshot.js"
+import processSnapshot, {prepareSnapshot} from "./processSnapshot.js"
 import { v4 as uuidv4 } from 'uuid';
 import { startPolling } from "./utils.js";
 
@@ -312,8 +312,23 @@ export default class Queue {
                         }
                     }
 
-                    // Process and upload snapshot
-                    let { processedSnapshot, warnings, discoveryErrors } = await processSnapshot(snapshot, this.ctx);
+                    let processedSnapshot, warnings, discoveryErrors;
+                    if (this.ctx.env.USE_REMOTE_DISCOVERY) {
+                        this.ctx.log.debug(`Using remote discovery`);
+                        let result = await prepareSnapshot(snapshot, this.ctx);
+                        
+                        processedSnapshot = result.processedSnapshot;
+                        warnings = result.warnings;
+                    } else {
+                         this.ctx.log.debug(`Using local discovery`);
+                         let result = await processSnapshot(snapshot, this.ctx);
+
+                         processedSnapshot = result.processedSnapshot;
+                         warnings = result.warnings;
+                         discoveryErrors = result.discoveryErrors;
+                    }
+
+
 
                     if (useCapsBuildId) {
                         if (useKafkaFlowCaps) {
