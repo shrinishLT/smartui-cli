@@ -158,10 +158,8 @@ export default class httpClient {
         let authResult = 1;
         let userName = '';
         let passWord = '';
-        if (ctx.config.tunnel?.user) {
+        if (ctx.config.tunnel && ctx.config.tunnel?.user && ctx.config.tunnel?.key) {
             userName = ctx.config.tunnel.user
-        }
-        if (ctx.config.tunnel?.key) {
             passWord = ctx.config.tunnel.key
         }
         if (this.projectToken) {
@@ -191,7 +189,7 @@ export default class httpClient {
             }
             return { authResult, orgId, userId };
         } else {
-            throw new Error('Authentication failed, project token not received');
+            throw new Error('Authentication failed, project token not received. Refer to the smartui.log file for more information');
         }
     }
 

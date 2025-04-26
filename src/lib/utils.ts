@@ -375,6 +375,7 @@ export async function startTunnelBinary(ctx: Context) {
     }
     if (tunnelConfig?.v) {
         tunnelArguments.v = tunnelConfig.v
+        tunnelArguments.logLevel = 'debug'
     }
     if (tunnelConfig?.logFile) {
         tunnelArguments.logFile = tunnelConfig.logFile
@@ -394,8 +395,8 @@ export async function startTunnelBinary(ctx: Context) {
     if (ctx.config.tunnel?.type === 'auto') {
         tunnelInstance = new lambdaTunnel();
         const istunnelStarted = await tunnelInstance.start(tunnelArguments);
-        ctx.log.debug('Tunnel is started Successfully');
-        const tunnelRunningStatus = tunnelInstance.isRunning();
+        ctx.log.debug('Tunnel is started Successfully with status ' + istunnelStarted);
+        const tunnelRunningStatus = await tunnelInstance.isRunning();
         ctx.log.debug('Running status of tunnel after start ? ' + tunnelRunningStatus);
     }
 }
@@ -416,7 +417,7 @@ export async function startPollingForTunnel(ctx: Context, build_id: string, base
                 ctx.log.info("Error: Build data is null.");
                 clearInterval(intervalId);
 
-                const tunnelRunningStatus = tunnelInstance.isRunning();
+                const tunnelRunningStatus = await tunnelInstance.isRunning();
                 ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
 
                 const status = await tunnelInstance.stop();
@@ -428,7 +429,7 @@ export async function startPollingForTunnel(ctx: Context, build_id: string, base
             if (resp.build.build_status_ind === constants.BUILD_COMPLETE || resp.build.build_status_ind === constants.BUILD_ERROR) {
                 clearInterval(intervalId);
 
-                const tunnelRunningStatus = tunnelInstance.isRunning();
+                const tunnelRunningStatus = await tunnelInstance.isRunning();
                 ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
 
                 const status = await tunnelInstance.stop();
@@ -446,6 +447,16 @@ export async function startPollingForTunnel(ctx: Context, build_id: string, base
         }
     }, 5000);
 }
+
+export async function stopTunnelHelper(ctx: Context) {
+    const tunnelRunningStatus = await tunnelInstance.isRunning();
+    ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
+
+    if (tunnelRunningStatus) {
+        const status = await tunnelInstance.stop();
+        ctx.log.debug('Tunnel is Stopped ? ' + status);
+    }
+} 
 
 
 

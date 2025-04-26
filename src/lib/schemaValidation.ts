@@ -192,8 +192,9 @@ const ConfigSchema = {
             type: "object",
             properties: {
                 type: {
-                    type: "string",
-                    errorMessage: "Invalid config; type is mandatory of type string"
+                    type: "string", 
+                    enum: ["auto", "manual"],
+                    errorMessage: "Invalid config; type is mandatory of type string having value auto or manual",
                 },
                 tunnelName: {
                     type: "string",
@@ -208,7 +209,7 @@ const ConfigSchema = {
                     errorMessage: "Invalid config; key should be a string value"
                 },
                 port: {
-                    type: "number",
+                    type: "string",
                     errorMessage: "Invalid config; port should be a string value"
                 },
                 proxyHost: {

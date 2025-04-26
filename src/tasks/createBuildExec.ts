@@ -2,7 +2,7 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import chalk from 'chalk';
 import { updateLogContext } from '../lib/logger.js';
-import { startTunnelBinary, startPollingForTunnel } from '../lib/utils.js';
+import { startTunnelBinary, startPollingForTunnel, stopTunnelHelper } from '../lib/utils.js';
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
@@ -42,6 +42,9 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 } else {
                     task.output = chalk.gray(`Empty PROJECT_TOKEN and PROJECT_NAME. Skipping Creation of Build!`)
                     task.title = 'Skipped SmartUI build creation'
+                    if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                        await stopTunnelHelper(ctx)
+                    }
                 }
 
                 if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
@@ -72,6 +75,9 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
             } catch (error: any) {
                 ctx.log.debug(error);
+                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                    await stopTunnelHelper(ctx)
+                }
                 if (errorCode === 1) {
                     task.output = chalk.gray(error.message);
                     throw new Error('Skipped SmartUI build creation');
