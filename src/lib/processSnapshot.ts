@@ -180,7 +180,7 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                     ctx.log.debug(`Resource had a disallowed status for retry as well  ${requestUrl} disallowed status [${responseOfRetry.status()}]`);
                     if (responseOfRetry && responseOfRetry.headers()) {
                         const responseHeadersRetry = responseOfRetry.headers();
-                        ctx.log.debug(`Response headers for ${requestUrl}: ${JSON.stringify(responseHeadersRetry, null, 2)}`);
+                        ctx.log.debug(`Response headers for retry ${requestUrl}: ${JSON.stringify(responseHeadersRetry, null, 2)}`);
                     }
 
                     let data = {
@@ -203,8 +203,6 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                         discoveryErrors.browsers[globalBrowser][globalViewport]?.push(data);
                     }
                 }
-
-
             } else {
                 ctx.log.debug(`Handling request ${requestUrl}\n - content-type ${response.headers()['content-type']}`);
                 

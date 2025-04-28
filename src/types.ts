@@ -34,6 +34,7 @@ export interface Context {
         ignoreHTTPSErrors : boolean;
         skipBuildCreation?: boolean;
         tunnel: tunnelConfig | undefined;
+        userAgent?: string;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -175,7 +176,8 @@ export interface MobileConfig {
 export type WebStaticConfig = Array<{
     name: string;
     url: string;
-    waitForTimeout?: number
+    waitForTimeout?: number;
+    userAgent?: string;
 }>;
 
 export type FigmaConfigItem = {
