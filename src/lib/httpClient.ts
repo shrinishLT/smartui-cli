@@ -189,6 +189,9 @@ export default class httpClient {
             }
             return { authResult, orgId, userId };
         } else {
+            if(response && response.message) {
+                throw new Error(response.message);
+            }
             throw new Error('Authentication failed, project token not received. Refer to the smartui.log file for more information');
         }
     }
