@@ -14,7 +14,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 await startTunnelBinary(ctx);
                 ctx.isStartExec = true;
                 task.title = 'Tunnel Started';
-                task.output = 'Tunnel started successfully';
+                task.output = chalk.gray('Tunnel started successfully');
             } catch (error: any) {
                 ctx.log.debug(error);
                 task.output = chalk.gray(error.message);
