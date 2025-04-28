@@ -102,7 +102,7 @@ export default (options: Record<string, string>): Context => {
             skipBuildCreation: config.skipBuildCreation ?? false,
             tunnel: config.tunnel ?? false,
             tunnelName: config.tunnelName || '',
-            userAgent: config.userAgent || '',
+            userAgent: config.userAgent || ''
         },
         uploadFilePath: '',
         webStaticConfig: [],

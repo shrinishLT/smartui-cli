@@ -198,7 +198,7 @@ const ConfigSchema = {
         },
         userAgent: {
             type: "string",
-            errorMessage: "Invalid config; userAgent must be string"
+            errorMessage: "User Agent value must be a valid string"
         },
     },
     anyOf: [

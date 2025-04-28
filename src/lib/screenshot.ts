@@ -35,7 +35,7 @@ async function captureScreenshotsForConfig(
         if(ctx.config.userAgent !== ""){
         contextOptions.userAgent = ctx.config.userAgent;
         }
-        if (urlConfig.userAgent !== "" && urlConfig.userAgent !== undefined) {
+        if (userAgent && userAgent !== "") {
             contextOptions.userAgent = userAgent;
         }
     }
