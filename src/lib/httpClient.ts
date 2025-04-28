@@ -46,15 +46,16 @@ export default class httpClient {
         this.axiosInstance = axios.create(axiosConfig);
 
         this.axiosInstance.interceptors.request.use((config) => {
-            if (!config.headers['projectToken']) {
+            if (!config.headers['projectToken'] && this.projectToken !== '') {
                 config.headers['projectToken'] = this.projectToken;
-            }
-            config.headers['projectName'] = this.projectName;
-            if (!config.headers['username'] || config.headers['username'] === '') {
-                config.headers['username'] = this.username;
-            }
-            if (!config.headers['accessKey'] || config.headers['accessKey'] === '') {
-                config.headers['accessKey'] = this.accessKey;
+            } else if ((!config.headers['projectName'] && this.projectName !== '')) {
+                config.headers['projectName'] = this.projectName;
+                if (!config.headers['username'] || config.headers['username'] === '') {
+                    config.headers['username'] = this.username;
+                }
+                if (!config.headers['accessKey'] || config.headers['accessKey'] === '') {
+                    config.headers['accessKey'] = this.accessKey;
+                }
             }
             return config;
         });
@@ -158,10 +159,15 @@ export default class httpClient {
         let authResult = 1;
         let userName = '';
         let passWord = '';
-        if (ctx.config.tunnel && ctx.config.tunnel?.user && ctx.config.tunnel?.key) {
-            userName = ctx.config.tunnel.user
-            passWord = ctx.config.tunnel.key
-        }
+        if (ctx.config.tunnel) {
+            if (ctx.config.tunnel?.user && ctx.config.tunnel?.key) {
+                userName = ctx.config.tunnel.user
+                passWord = ctx.config.tunnel.key
+            } else {
+                userName = this.username
+                passWord = this.accessKey
+            }
+        } 
         if (this.projectToken) {
             authResult = 0;
         }
