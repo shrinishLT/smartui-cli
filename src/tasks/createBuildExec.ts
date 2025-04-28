@@ -10,19 +10,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
         task: async (ctx, task): Promise<void> => {
             updateLogContext({task: 'createBuild'});
 
-            let errorCode = 0;
             try {
-                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
-                    try {
-                        await startTunnelBinary(ctx);
-                        ctx.isStartExec = true;
-                    } catch (error: any) {
-                        ctx.log.debug(`Error starting the tunnel: ${error.message}`);
-                        errorCode = 1; 
-                        throw new Error(`Error while starting tunnel binary: ${error.message}`);
-                    }
-                }
-
                 if (ctx.authenticatedInitially && !ctx.config.skipBuildCreation) {
                     let resp = await ctx.client.createBuild(ctx.git, ctx.config, ctx.log, ctx.build.name, ctx.isStartExec);
                     ctx.build = {
@@ -78,13 +66,8 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
                     await stopTunnelHelper(ctx)
                 }
-                if (errorCode === 1) {
-                    task.output = chalk.gray(error.message);
-                    throw new Error('Skipped SmartUI build creation');
-                } else {
-                    task.output = chalk.gray(error.message);
-                    throw new Error('SmartUI build creation failed');
-                }
+                task.output = chalk.gray(error.message);
+                throw new Error('SmartUI build creation failed');
             }
         },
         rendererOptions: { persistentOutput: true }

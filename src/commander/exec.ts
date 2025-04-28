@@ -11,6 +11,7 @@ import exec from '../tasks/exec.js'
 import processSnapshots from '../tasks/processSnapshot.js'
 import finalizeBuild from '../tasks/finalizeBuild.js'
 import snapshotQueue from '../lib/snapshotQueue.js'
+import startTunnel from '../tasks/startTunnel.js'
 
 const command = new Command();
 
@@ -42,6 +43,7 @@ command
                 authExec(ctx),
                 startServer(ctx),
                 getGitInfo(ctx),
+                ...(ctx.config.tunnel && ctx.config.tunnel?.type === 'auto' ? [startTunnel(ctx)] : []),
                 createBuildExec(ctx),
                 exec(ctx),
                 processSnapshots(ctx),

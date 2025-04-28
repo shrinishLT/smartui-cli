@@ -384,11 +384,12 @@ export async function startTunnelBinary(ctx: Context) {
     if (tunnelConfig?.tunnelName) {
         tunnelArguments.tunnelName = tunnelConfig.tunnelName
     } else {
-        const randomNumber = Math.floor(100000 + Math.random() * 900000);
+        const randomNumber = Math.floor(1000000 + Math.random() * 9000000);
         let randomTunnelName = `smartui-cli-Node-tunnel-${randomNumber}`
         tunnelArguments.tunnelName = randomTunnelName;
         ctx.config.tunnel.tunnelName = randomTunnelName
     }
+    tunnelArguments.environment = 'stage'
     
     ctx.log.debug(`tunnel config ${JSON.stringify(tunnelArguments)}`)
 
@@ -452,10 +453,8 @@ export async function stopTunnelHelper(ctx: Context) {
     const tunnelRunningStatus = await tunnelInstance.isRunning();
     ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
 
-    if (tunnelRunningStatus) {
-        const status = await tunnelInstance.stop();
-        ctx.log.debug('Tunnel is Stopped ? ' + status);
-    }
+    const status = await tunnelInstance.stop();
+    ctx.log.debug('Tunnel is Stopped ? ' + status);
 } 
 
 
