@@ -189,12 +189,60 @@ const ConfigSchema = {
             errorMessage: "Invalid config; skipBuildCreation must be true/false"
         },
         tunnel: {
-            type: "boolean",
-            errorMessage: "Invalid config; tunnel must be true/false"
-        },
-        tunnelName: {
-            type: "string",
-            errorMessage: "Invalid config; tunnelName must be string"
+            type: "object",
+            properties: {
+                type: {
+                    type: "string", 
+                    enum: ["auto", "manual"],
+                    errorMessage: "Invalid config; type is mandatory of type string having value auto or manual",
+                },
+                tunnelName: {
+                    type: "string",
+                    errorMessage: "Invalid config; tunnelName should be a string value"
+                },
+                user: {
+                    type: "string",
+                    errorMessage: "Invalid config; user should be a string value"
+                },
+                key: {
+                    type: "string",
+                    errorMessage: "Invalid config; key should be a string value"
+                },
+                port: {
+                    type: "string",
+                    errorMessage: "Invalid config; port should be a string value"
+                },
+                proxyHost: {
+                    type: "string",
+                    errorMessage: "Invalid config; proxyHost should be a string value"
+                },
+                proxyPort: {
+                    type: "number",
+                    errorMessage: "Invalid config; proxyPort should be an int value"
+                },
+                proxyUser: {
+                    type: "string",
+                    errorMessage: "Invalid config; proxyUser should be a string value"
+                },
+                proxyPass: {
+                    type: "string",
+                    errorMessage: "Invalid config; proxyPass should be a string value"
+                },
+                dir: {
+                    type: "string",
+                    errorMessage: "Invalid config; dir should be a string value"
+                },
+                v: {
+                    type: "boolean",
+                    errorMessage: "Invalid config; v should be a boolean value"
+                },
+                logFile: {
+                    type: "string",
+                    errorMessage: "Invalid config; logFile should be a string value"
+                },
+            },
+            required: ["type"],
+            additionalProperties: false
         },
         userAgent: {
             type: "string",

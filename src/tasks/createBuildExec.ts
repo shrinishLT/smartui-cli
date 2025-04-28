@@ -2,6 +2,7 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import chalk from 'chalk';
 import { updateLogContext } from '../lib/logger.js';
+import { startTunnelBinary, startPollingForTunnel, stopTunnelHelper } from '../lib/utils.js';
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
@@ -29,10 +30,19 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 } else {
                     task.output = chalk.gray(`Empty PROJECT_TOKEN and PROJECT_NAME. Skipping Creation of Build!`)
                     task.title = 'Skipped SmartUI build creation'
+                    if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                        await stopTunnelHelper(ctx)
+                    }
+                }
+
+                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                    if (ctx.build && ctx.build.id) {
+                        startPollingForTunnel(ctx, '', false, '');
+                    }
                 }
 
                 if (ctx.config.tunnel) {
-                    let tunnelResp = await ctx.client.getTunnelDetails(ctx.config.tunnelName, ctx.log);
+                    let tunnelResp = await ctx.client.getTunnelDetails(ctx, ctx.log);
                     ctx.log.debug(`Tunnel Response: ${JSON.stringify(tunnelResp)}`)
                     if (tunnelResp && tunnelResp.data && tunnelResp.data.host && tunnelResp.data.port && tunnelResp.data.tunnel_name) {
                         ctx.tunnelDetails = {
@@ -53,6 +63,9 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
             } catch (error: any) {
                 ctx.log.debug(error);
+                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                    await stopTunnelHelper(ctx)
+                }
                 task.output = chalk.gray(error.message);
                 throw new Error('SmartUI build creation failed');
             }
