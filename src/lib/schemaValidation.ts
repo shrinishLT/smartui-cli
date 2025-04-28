@@ -244,10 +244,6 @@ const ConfigSchema = {
             required: ["type"],
             additionalProperties: false
         },
-        tunnelName: {
-            type: "string",
-            errorMessage: "Invalid config; tunnelName must be string"
-        },
     },
     anyOf: [
         { required: ["web"] },

@@ -104,8 +104,7 @@ export default (options: Record<string, string>): Context => {
             useGlobalCache: config.useGlobalCache ?? false,
             ignoreHTTPSErrors: config.ignoreHTTPSErrors ?? false,
             skipBuildCreation: config.skipBuildCreation ?? false,
-            tunnel: tunnelObj,
-            tunnelName: config.tunnelName || ''
+            tunnel: tunnelObj
         },
         uploadFilePath: '',
         webStaticConfig: [],
