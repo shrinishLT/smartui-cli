@@ -194,7 +194,7 @@ const ConfigSchema = {
                 type: {
                     type: "string", 
                     enum: ["auto", "manual"],
-                    errorMessage: "Invalid config; type is mandatory of type string having value auto or manual",
+                    errorMessage: "Invalid config; tunnel type is mandatory parameter of type string having value auto or manual",
                 },
                 tunnelName: {
                     type: "string",
