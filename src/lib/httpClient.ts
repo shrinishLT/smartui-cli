@@ -45,14 +45,18 @@ export default class httpClient {
 
         this.axiosInstance = axios.create(axiosConfig);
 
-
         this.axiosInstance.interceptors.request.use((config) => {
-            if (!config.headers['projectToken']) {
+            if (!config.headers['projectToken'] && this.projectToken !== '') {
                 config.headers['projectToken'] = this.projectToken;
+            } else if ((!config.headers['projectName'] && this.projectName !== '')) {
+                config.headers['projectName'] = this.projectName;
+                if (!config.headers['username'] || config.headers['username'] === '') {
+                    config.headers['username'] = this.username;
+                }
+                if (!config.headers['accessKey'] || config.headers['accessKey'] === '') {
+                    config.headers['accessKey'] = this.accessKey;
+                }
             }
-            config.headers['projectName'] = this.projectName;
-            config.headers['username'] = this.username;
-            config.headers['accessKey'] = this.accessKey;
             return config;
         });
 
@@ -151,6 +155,53 @@ export default class httpClient {
         }
     }
 
+    async authExec(ctx: Context, log: Logger, env: Env): Promise<{ authResult: number, orgId: number, userId: number }> {
+        let authResult = 1;
+        let userName = '';
+        let passWord = '';
+        if (ctx.config.tunnel) {
+            if (ctx.config.tunnel?.user && ctx.config.tunnel?.key) {
+                userName = ctx.config.tunnel.user
+                passWord = ctx.config.tunnel.key
+            } else {
+                userName = this.username
+                passWord = this.accessKey
+            }
+        } 
+        if (this.projectToken) {
+            authResult = 0;
+        }
+        const response = await this.request({
+            url: '/token/verify',
+            method: 'GET',
+            headers: {
+                username: userName,
+                accessKey: passWord
+            }
+        }, log);
+        if (response && response.projectToken) {
+            let orgId = 0;
+            let userId = 0;
+            this.projectToken = response.projectToken;
+            env.PROJECT_TOKEN = response.projectToken;
+            if (response.message && response.message.includes('Project created successfully')) {
+                authResult = 2;
+            }
+            if (response.orgId) {
+                orgId = response.orgId
+            }
+            if (response.userId) {
+                userId = response.userId
+            }
+            return { authResult, orgId, userId };
+        } else {
+            if(response && response.message) {
+                throw new Error(response.message);
+            }
+            throw new Error('Authentication failed, project token not received. Refer to the smartui.log file for more information');
+        }
+    }
+
     createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean) {
         return this.request({
             url: '/build',
@@ -174,16 +225,24 @@ export default class httpClient {
         }, log);
     }
 
-    getTunnelDetails(tunnelName: string, log: Logger) {
+    getTunnelDetails(ctx: Context, log: Logger) {
+        const data: any = { 
+            orgId: ctx.orgId,
+            userId: ctx.userId,
+            userName: ctx.config.tunnel?.user,
+            password: ctx.config.tunnel?.key
+        };
+    
+        if (ctx.config.tunnel?.tunnelName) {
+            data.tunnelName = ctx.config.tunnel.tunnelName;
+        }
+    
         return this.request({
             url: '/tunnel',
             method: 'POST',
-            data: { 
-                tunnelName: tunnelName
-            }
-        }, log)
+            data: data
+        }, log);
     }
-    
 
     ping(buildId: string, log: Logger) {
         return this.request({
