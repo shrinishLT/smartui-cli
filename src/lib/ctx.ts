@@ -153,6 +153,14 @@ export default (options: Record<string, string>): Context => {
         buildToSnapshotCountMap: new Map<string, number>(),
         fetchResultsForBuild: new Array<string>,
         orgId: 0,
-        userId: 0
+        userId: 0,
+        mergeBranchSource: '',
+        mergeBranchTarget: '',
+        mergeBuildSource: '',
+        mergeBuildTarget: '',
+        mergeBuildSourceId: '',
+        mergeBuildTargetId: '',
+        mergeByBranch: false,
+        mergeByBuild: false
     }
 }

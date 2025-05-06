@@ -72,6 +72,14 @@ export interface Context {
     fetchResultsForBuild?: Array<string>;
     orgId?: number;
     userId?: number;
+    mergeBranchSource?: string;
+    mergeBranchTarget?: string;
+    mergeBuildSource?: string;
+    mergeBuildTarget?: string;
+    mergeBuildSourceId?: string;
+    mergeBuildTargetId?: string;
+    mergeByBranch?: boolean;
+    mergeByBuild?: boolean;
 }
 
 export interface Env {

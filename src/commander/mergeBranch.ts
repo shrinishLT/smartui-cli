@@ -1,23 +1,16 @@
 import { Command } from 'commander';
 import { Context } from '../types.js';
 import { color, Listr, ListrDefaultRendererLogLevels } from 'listr2';
-import startServer from '../tasks/startServer.js';
 import auth from '../tasks/auth.js';
 import ctxInit from '../lib/ctx.js';
-import getGitInfo from '../tasks/getGitInfo.js';
-import createBuild from '../tasks/createBuild.js';
-import snapshotQueue from '../lib/snapshotQueue.js';
-import { startPolling, startPingPolling } from '../lib/utils.js';
-import fetchBuildInfo from '../tasks/fetchBuildInfo.js'
+import fetchBranchInfo from '../tasks/fetchBranchInfo.js'
 import mergeBuilds from '../tasks/mergeBuilds.js'
 
 const command = new Command();
 
 command
-    .name('merge')
+    .name('branch')
     .description('Merge a source branch into the target branch')
-    .command('branch')
-    .description('Merge the source branch into the target branch')
     .requiredOption('--source <string>', 'Source branch to merge')
     .requiredOption('--target <string>', 'Target branch to merge into')
     .action(async function(this: Command, options: { source: string, target: string }) {
@@ -33,15 +26,15 @@ command
             process.exit(1);
         }
 
-        ctx.log.debug(`Merging source branch '${source}' into target branch '${target}'`);
-        ctx.snapshotQueue = new snapshotQueue(ctx);
-        ctx.totalSnapshots = 0;
-        ctx.isStartExec = true;
+        ctx.log.debug(`Merging source branch '${source}' into branch branch '${target}'`);
+        ctx.mergeBranchSource = source
+        ctx.mergeBranchTarget = target
+        ctx.mergeByBranch = true
 
         let tasks = new Listr<Context>(
             [
                 auth(ctx),
-                fetchBuildInfo(ctx),
+                fetchBranchInfo(ctx),
                 mergeBuilds(ctx),
             ],
             {

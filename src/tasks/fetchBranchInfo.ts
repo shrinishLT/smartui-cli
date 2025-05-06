@@ -2,32 +2,31 @@ import { ListrTask, ListrRendererFactory } from 'listr2'
 import { Context } from '../types.js'
 import chalk from 'chalk'
 import { updateLogContext } from '../lib/logger.js'
-import { error } from 'console'
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
-        title: `Fetching build info`,
+        title: `Fetching branch info`,
         task: async (ctx, task): Promise<void> => {
-            updateLogContext({task: 'fetchBuildInfo'});
+            updateLogContext({task: 'fetchBranchInfo'});
 
             try {
-                let resp = await ctx.client.fetchBuildInfo(ctx.mergeBuildSource, ctx.mergeBuildTarget, ctx);
+                let resp = await ctx.client.fetchBranchInfo(ctx.mergeBranchSource, ctx.mergeBranchTarget, ctx);
                 if (resp && resp.data && resp.data.source && resp.data.target) {
                     ctx.mergeBuildSourceId = resp.data.source
                     ctx.mergeBuildTargetId = resp.data.target
                     ctx.log.debug(`Merge Build source buildId: ${ctx.mergeBuildSourceId} and target buildId: ${ctx.mergeBuildTargetId}`)
                 } else if (resp && resp.error) {
                     if (resp.error.message) {
-                        ctx.log.error(`Error while fetching buildInfo: ${resp.error.message}`)
-                        throw new Error(`Error while fetching buildInfo: ${resp.error.message}`);
+                        ctx.log.error(`Error while fetching branch Info: ${resp.error.message}`)
+                        throw new Error(`Error while fetching branch Info: ${resp.error.message}`);
                     }
                 }
-                task.title = 'Build info fetched';
+                task.title = 'Branch info fetched';
                 task.output = chalk.gray(`Source buildId: ${ctx.mergeBuildSourceId} and Target buildId: ${ctx.mergeBuildTargetId}`);
             } catch (error: any) {
                 ctx.log.debug(error);
                 task.output = chalk.gray(error.message);
-                throw new Error('Build info fetching failed');
+                throw new Error('Branch info fetching failed');
             }
         },
         rendererOptions: { persistentOutput: true }

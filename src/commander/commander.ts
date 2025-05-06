@@ -8,8 +8,7 @@ import { uploadFigma, uploadWebFigmaCommand,uploadAppFigmaCommand  } from './upl
 import startServer from './server.js';
 import stopServer from './stopServer.js'
 import ping from './ping.js'
-import mergeBranch from './mergeBranch.js'
-import mergeBuild from './mergeBuild.js'
+import merge from './merge.js'
 
 const program = new Command();
 
@@ -25,8 +24,7 @@ program
     .addCommand(upload)
     .addCommand(startServer)
     .addCommand(stopServer)
-    .addCommand(mergeBranch)
-    .addCommand(mergeBuild)
+    .addCommand(merge)
     .addCommand(ping)
     .addCommand(configFigma)
     .addCommand(uploadFigma)
