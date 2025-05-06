@@ -660,9 +660,10 @@ const FigmaAppConfigSchema: JSONSchemaType<Object> = {
                 "type": "object",
                 "properties": {
                     name: {
-                        "type": "string",
+                        type: "string",
                         minLength: 1,
-                        errorMessage: "device name is mandatory and cannot be empty"
+                        enum: Object.keys(constants.SUPPORTED_MOBILE_DEVICES),
+                        errorMessage: "unsupported mobile device name"
                     },
                     "platform": {
                         "type": "array",
