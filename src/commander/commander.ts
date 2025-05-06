@@ -4,7 +4,7 @@ import { configWeb, configStatic, configFigma, configWebFigma} from './config.js
 import capture from './capture.js'
 import upload from './upload.js'
 import { version } from '../../package.json'
-import { uploadFigma, uploadWebFigmaCommand  } from './uploadFigma.js'
+import { uploadFigma, uploadWebFigmaCommand,uploadAppFigmaCommand  } from './uploadFigma.js'
 import startServer from './server.js';
 import stopServer from './stopServer.js'
 import ping from './ping.js'
@@ -28,6 +28,7 @@ program
     .addCommand(uploadFigma)
     .addCommand(configWebFigma)
     .addCommand(uploadWebFigmaCommand)
+    .addCommand(uploadAppFigmaCommand)
 
 
 
