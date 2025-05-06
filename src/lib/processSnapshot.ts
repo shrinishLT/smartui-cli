@@ -12,6 +12,162 @@ const ALLOWED_STATUSES = [200, 201];
 const REQUEST_TIMEOUT = 1800000;
 const MIN_VIEWPORT_HEIGHT = 1080;
 
+export async function prepareSnapshot(snapshot: Snapshot, ctx: Context): Promise<Record<string, any>> {
+    let processedOptions: Record<string, any> = {};
+    processedOptions.cliEnableJavascript = ctx.config.cliEnableJavaScript;
+    processedOptions.ignoreHTTPSErrors = ctx.config.ignoreHTTPSErrors;
+    if (ctx.config.basicAuthorization) {
+        processedOptions.basicAuthorization = ctx.config.basicAuthorization;
+    }
+    ctx.config.allowedHostnames.push(new URL(snapshot.url).hostname);
+    processedOptions.allowedHostnames = ctx.config.allowedHostnames;
+    processedOptions.skipCapturedCookies = ctx.env.SMARTUI_DO_NOT_USE_CAPTURED_COOKIES;
+
+    if (ctx.env.HTTP_PROXY || ctx.env.HTTPS_PROXY) processedOptions.proxy = { server: ctx.env.HTTP_PROXY || ctx.env.HTTPS_PROXY };
+    if (ctx.env.SMARTUI_HTTP_PROXY || ctx.env.SMARTUI_HTTPS_PROXY) processedOptions.proxy = { server: ctx.env.SMARTUI_HTTP_PROXY || ctx.env.SMARTUI_HTTPS_PROXY };
+
+    let options = snapshot.options;
+    let optionWarnings: Set<string> = new Set();
+    let selectors: Array<string> = [];
+    let ignoreOrSelectDOM: string;
+    let ignoreOrSelectBoxes: string;
+
+    if (options && Object.keys(options).length) {
+        ctx.log.debug(`Snapshot options: ${JSON.stringify(options)}`);
+
+        const isNotAllEmpty = (obj: Record<string, Array<string>>): boolean => {
+            for (let key in obj) if (obj[key]?.length) return true;
+            return false;
+        }
+
+        if (options.loadDomContent) {
+            processedOptions.loadDomContent = true;
+        }
+
+        if (options.sessionId) {
+            const sessionId = options.sessionId;
+            processedOptions.sessionId = sessionId
+            if (ctx.sessionCapabilitiesMap && ctx.sessionCapabilitiesMap.has(sessionId)) {
+                const sessionCapabilities = ctx.sessionCapabilitiesMap.get(sessionId);
+                if (sessionCapabilities && sessionCapabilities.id) {
+                    processedOptions.testId = sessionCapabilities.id;
+                }
+            }
+        }
+
+        if (options.web && Object.keys(options.web).length) {
+            processedOptions.web = {};
+
+            // Check and process viewports in web
+            if (options.web.viewports && options.web.viewports.length > 0) {
+                processedOptions.web.viewports = options.web.viewports.filter(viewport =>
+                    Array.isArray(viewport) && viewport.length > 0
+                );
+            }
+
+            // Check and process browsers in web
+            if (options.web.browsers && options.web.browsers.length > 0) {
+                processedOptions.web.browsers = options.web.browsers;
+            }
+        }
+
+        if (options.mobile && Object.keys(options.mobile).length) {
+            processedOptions.mobile = {};
+
+            // Check and process devices in mobile
+            if (options.mobile.devices && options.mobile.devices.length > 0) {
+                processedOptions.mobile.devices = options.mobile.devices;
+            }
+
+            // Check if 'fullPage' is provided and is a boolean, otherwise set default to true
+            if (options.mobile.hasOwnProperty('fullPage') && typeof options.mobile.fullPage === 'boolean') {
+                processedOptions.mobile.fullPage = options.mobile.fullPage;
+            } else {
+                processedOptions.mobile.fullPage = true; // Default value for fullPage
+            }
+
+            // Check if 'orientation' is provided and is valid, otherwise set default to 'portrait'
+            if (options.mobile.hasOwnProperty('orientation') && (options.mobile.orientation === constants.MOBILE_ORIENTATION_PORTRAIT || options.mobile.orientation === constants.MOBILE_ORIENTATION_LANDSCAPE)) {
+                processedOptions.mobile.orientation = options.mobile.orientation;
+            } else {
+                processedOptions.mobile.orientation = constants.MOBILE_ORIENTATION_PORTRAIT; // Default value for orientation
+            }
+        }
+
+        if (options.element && Object.keys(options.element).length) {
+            if (options.element.id) processedOptions.element = '#' + options.element.id;
+            else if (options.element.class) processedOptions.element = '.' + options.element.class;
+            else if (options.element.cssSelector) processedOptions.element = options.element.cssSelector;
+            else if (options.element.xpath) processedOptions.element = 'xpath=' + options.element.xpath;
+        } else if (options.ignoreDOM && Object.keys(options.ignoreDOM).length && isNotAllEmpty(options.ignoreDOM)) {
+            processedOptions.ignoreBoxes = {};
+            ignoreOrSelectDOM = 'ignoreDOM';
+            ignoreOrSelectBoxes = 'ignoreBoxes';
+        } else if (options.selectDOM && Object.keys(options.selectDOM).length && isNotAllEmpty(options.selectDOM)) {
+            processedOptions.selectBoxes = {};
+            ignoreOrSelectDOM = 'selectDOM';
+            ignoreOrSelectBoxes = 'selectBoxes';
+        }
+        if (ignoreOrSelectDOM) {
+            for (const [key, value] of Object.entries(options[ignoreOrSelectDOM])) {
+                switch (key) {
+                    case 'id':
+                        selectors.push(...value.map(e => '#' + e));
+                        break;
+                    case 'class':
+                        selectors.push(...value.map(e => '.' + e));
+                        break;
+                    case 'xpath':
+                        selectors.push(...value.map(e => 'xpath=' + e));
+                        break;
+                    case 'cssSelector':
+                        selectors.push(...value);
+                        break;
+                }
+            }
+        }
+        if(options.ignoreType){
+            processedOptions.ignoreType = options.ignoreType;
+        }
+    }
+
+    if (ctx.config.tunnel) {
+        if (ctx.tunnelDetails && ctx.tunnelDetails.tunnelPort != -1 && ctx.tunnelDetails.tunnelHost != '') {
+            const tunnelAddress = `http://${ctx.tunnelDetails.tunnelHost}:${ctx.tunnelDetails.tunnelPort}`;
+            processedOptions.tunnelAddress = tunnelAddress;
+            ctx.log.debug(`Tunnel address added to processedOptions: ${tunnelAddress}`);
+        }
+    }
+
+    processedOptions.allowedAssets = ctx.config.allowedAssets;
+    processedOptions.selectors = selectors;
+
+    processedOptions.ignoreDOM = options?.ignoreDOM;
+    processedOptions.selectDOM = options?.selectDOM;
+    ctx.log.debug(`Processed options: ${JSON.stringify(processedOptions)}`);
+
+    let renderViewports;
+    if((snapshot.options && snapshot.options.web)  || (snapshot.options && snapshot.options.mobile)){
+        renderViewports = getRenderViewportsForOptions(snapshot.options)
+    } else {
+        renderViewports = getRenderViewports(ctx);
+    }
+
+    processedOptions.doRemoteDiscovery = true;
+    return {
+        processedSnapshot: {
+            name: snapshot.name,
+            url: snapshot.url,
+            dom: Buffer.from(snapshot.dom.html).toString('base64'),
+            resources: {},
+            options: processedOptions,
+            cookies: Buffer.from(snapshot.dom.cookies).toString('base64'),
+            renderViewports: renderViewports,
+        },
+        warnings: [...optionWarnings, ...snapshot.dom.warnings],
+    }
+}
+
 export default async function processSnapshot(snapshot: Snapshot, ctx: Context): Promise<Record<string, any>> {
     updateLogContext({ task: 'discovery' });
     ctx.log.debug(`Processing snapshot ${snapshot.name} ${snapshot.url}`);
@@ -23,6 +179,8 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
         snapshotUUID: "",
         browsers: {}
       };
+
+    let processedOptions: Record<string, any> = {};
 
     let globalViewport = ""
     let globalBrowser = constants.CHROME
@@ -233,7 +391,6 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
 
     let options = snapshot.options;
     let optionWarnings: Set<string> = new Set();
-    let processedOptions: Record<string, any> = {};
     let selectors: Array<string> = [];
     let ignoreOrSelectDOM: string;
     let ignoreOrSelectBoxes: string;
@@ -416,6 +573,7 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
         } catch (error) {
             ctx.log.debug(`Network idle failed due to ${error}`);
         }
+
 
         if (ctx.config.allowedAssets && ctx.config.allowedAssets.length) {
             for (let assetUrl of ctx.config.allowedAssets) {
