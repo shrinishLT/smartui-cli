@@ -12,16 +12,22 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
             try {
                 let resp
                 if (ctx.mergeByBranch) {
-                    resp = await ctx.client.mergeBuildsByBuildId(ctx.mergeBuildSourceId, ctx.mergeBuildTargetId, ctx.mergeByBranch, ctx.mergeByBuild, ctx.mergeBranchSource, ctx.mergeBranchTarget, '', '', ctx);
+                    resp = await ctx.client.mergeBuildsByBuildId(ctx.mergeBuildSourceId, ctx.mergeBuildTargetId, ctx.mergeByBranch, ctx.mergeByBuild, ctx.mergeBranchSource, ctx.mergeBranchTarget, '', '', ctx.git, ctx);
                 } else {
-                    resp = await ctx.client.mergeBuildsByBuildId(ctx.mergeBuildSourceId, ctx.mergeBuildTargetId, ctx.mergeByBranch, ctx.mergeByBuild, '', '', ctx.mergeBuildSource, ctx.mergeBuildTarget, ctx);
+                    resp = await ctx.client.mergeBuildsByBuildId(ctx.mergeBuildSourceId, ctx.mergeBuildTargetId, ctx.mergeByBranch, ctx.mergeByBuild, '', '', ctx.mergeBuildSource, ctx.mergeBuildTarget, ctx.git, ctx);
                 }
-                
-                task.title = 'Merging smartui branch initiated';
+                if (resp && resp.data && resp.data.message) {
+                    ctx.log.debug(`${resp.data.message}`)
+                } else {
+                    ctx.log.error(`Error while initiating merging process: ${resp.error.message}`)
+                    throw new Error(`Error while initiating merging process: ${resp.error.message}`);
+                }
+                task.title = 'Merging SmartUI builds initiated';
+                task.output = chalk.gray(`${resp.data.message}`);
             } catch (error: any) {
                 ctx.log.debug(error);
                 task.output = chalk.gray(error.message);
-                throw new Error('Merging smartui branch failed');
+                throw new Error('Merging SmartUI build failed');
             }
         },
         rendererOptions: { persistentOutput: true }

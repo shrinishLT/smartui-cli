@@ -10,6 +10,10 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
             updateLogContext({task: 'fetchBranchInfo'});
 
             try {
+                if (ctx.mergeBranchSource === ctx.mergeBranchTarget) {
+                    ctx.log.error(`Merging two similar branch is not possible`)
+                    throw new Error(`Merging two similar branch is not possible`);
+                }
                 let resp = await ctx.client.fetchBranchInfo(ctx.mergeBranchSource, ctx.mergeBranchTarget, ctx);
                 if (resp && resp.data && resp.data.source && resp.data.target) {
                     ctx.mergeBuildSourceId = resp.data.source

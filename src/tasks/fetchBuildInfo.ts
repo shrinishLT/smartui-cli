@@ -11,6 +11,10 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
             updateLogContext({task: 'fetchBuildInfo'});
 
             try {
+                if (ctx.mergeBuildSource === ctx.mergeBuildTarget) {
+                    ctx.log.error(`Merging two similar build is not possible`)
+                    throw new Error(`Merging two similar build is not possible`);
+                }
                 let resp = await ctx.client.fetchBuildInfo(ctx.mergeBuildSource, ctx.mergeBuildTarget, ctx);
                 if (resp && resp.data && resp.data.source && resp.data.target) {
                     ctx.mergeBuildSourceId = resp.data.source

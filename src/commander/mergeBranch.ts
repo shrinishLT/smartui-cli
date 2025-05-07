@@ -5,6 +5,7 @@ import auth from '../tasks/auth.js';
 import ctxInit from '../lib/ctx.js';
 import fetchBranchInfo from '../tasks/fetchBranchInfo.js'
 import mergeBuilds from '../tasks/mergeBuilds.js'
+import getGitInfo from '../tasks/getGitInfo.js'
 
 const command = new Command();
 
@@ -34,6 +35,7 @@ command
         let tasks = new Listr<Context>(
             [
                 auth(ctx),
+                getGitInfo(ctx),
                 fetchBranchInfo(ctx),
                 mergeBuilds(ctx),
             ],

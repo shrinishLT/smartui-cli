@@ -581,7 +581,10 @@ export default class httpClient {
         }, ctx.log)
     }
 
-    mergeBuildsByBuildId(source: string, target: string, byBranch: boolean, byBuildName: boolean, sourceBranchName: string, targetBranchName: string, sourceBuildName: string, targetBuildName: string, ctx: Context) {
+    mergeBuildsByBuildId(source: string, target: string, byBranch: boolean, byBuildName: boolean, sourceBranchName: string, targetBranchName: string, sourceBuildName: string, targetBuildName: string, git: Git, ctx: Context) {
+        if (byBranch) {
+            git.branch = targetBranchName
+        }
         return this.request({
             url: `/mergeBuilds`,
             method: 'POST',
@@ -593,7 +596,8 @@ export default class httpClient {
                 sourceBranchName,
                 targetBranchName,
                 sourceBuildName,
-                targetBuildName
+                targetBuildName,
+                git
             }
         }, ctx.log)
     }
