@@ -6,15 +6,18 @@ import auth from '../tasks/auth.js'
 import ctxInit from '../lib/ctx.js'
 import getGitInfo from '../tasks/getGitInfo.js'
 import finalizeBuild from '../tasks/finalizeBuild.js'
-import { validateFigmaDesignConfig, validateWebFigmaConfig } from '../lib/schemaValidation.js'
+import { validateFigmaDesignConfig, validateWebFigmaConfig, validateAppFigmaConfig } from '../lib/schemaValidation.js'
 import uploadFigmaDesigns from '../tasks/uploadFigmaDesigns.js'
 import uploadWebFigma from '../tasks/uploadWebFigma.js'
+import uploadAppFigma from '../tasks/uploadAppFigma.js'     
 import { verifyFigmaWebConfig } from '../lib/config.js'
 import chalk from 'chalk';
 
 
 const uploadFigma = new Command();
 const uploadWebFigmaCommand = new Command();
+const uploadAppFigmaCommand = new Command();
+
 
 uploadFigma
     .name('upload-figma')
@@ -68,7 +71,7 @@ uploadFigma
 
 uploadWebFigmaCommand
     .name('upload-figma-web')
-    .description('Capture screenshots of static sites')
+    .description('Capture figma screenshots into CLI build')
     .argument('<file>', 'figma config config file')
     .option('--markBaseline', 'Mark the uploaded images as baseline')
     .option('--buildName <buildName>', 'Name of the build')
@@ -130,4 +133,71 @@ uploadWebFigmaCommand
 
     })
 
-export { uploadFigma, uploadWebFigmaCommand }
+
+
+    uploadAppFigmaCommand
+    .name('upload-figma-app')
+    .description('Capture figma screenshots into App Build')
+    .argument('<file>', 'figma config config file')
+    .option('--markBaseline', 'Mark the uploaded images as baseline')
+    .option('--buildName <buildName>', 'Name of the build')
+    .option('--fetch-results [filename]', 'Fetch results and optionally specify an output file, e.g., <filename>.json')
+    .action(async function (file, _, command) {
+        let ctx: Context = ctxInit(command.optsWithGlobals());
+
+        if (!fs.existsSync(file)) {
+            console.log(`Error: figma-app config file ${file} not found.`);
+            return;
+        }
+        try {
+            ctx.config = JSON.parse(fs.readFileSync(file, 'utf8'));
+            ctx.log.info(JSON.stringify(ctx.config));
+            if (!validateAppFigmaConfig(ctx.config)) {
+                ctx.log.debug(JSON.stringify(validateAppFigmaConfig.errors, null, 2));
+                // Iterate and add warning for "additionalProperties"
+                validateAppFigmaConfig.errors?.forEach(error => {
+                    if (error.keyword === "additionalProperties") {
+                        ctx.log.warn(`Additional property "${error.params.additionalProperty}" is not allowed.`)
+                    } else {
+                        const validationError = error.message;
+                        throw new Error(validationError || 'Invalid figma-app config found in file : ' + file);
+                    }
+                });
+            }
+
+            //Validate the figma config
+            verifyFigmaWebConfig(ctx);
+        } catch (error: any) {
+            ctx.log.error(chalk.red(`Invalid figma-app config; ${error.message}`));
+            return;
+        }
+
+        let tasks = new Listr<Context>(
+            [
+                auth(ctx),
+                getGitInfo(ctx),
+                uploadAppFigma(ctx),
+                finalizeBuild(ctx)
+            ],
+            {
+                rendererOptions: {
+                    icon: {
+                        [ListrDefaultRendererLogLevels.OUTPUT]: `→`
+                    },
+                    color: {
+                        [ListrDefaultRendererLogLevels.OUTPUT]: color.gray as LoggerFormat
+                    }
+                }
+            }
+        )
+
+        try {
+            await tasks.run(ctx);
+        } catch (error) {
+            console.log('\nRefer docs: https://www.lambdatest.com/support/docs/smart-visual-regression-testing/');
+        }
+
+    })
+
+
+export { uploadFigma, uploadWebFigmaCommand, uploadAppFigmaCommand }
