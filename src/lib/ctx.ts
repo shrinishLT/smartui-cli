@@ -144,6 +144,7 @@ export default (options: Record<string, string>): Context => {
             ignorePattern: ignoreFilePattern,
             fetchResults: fetchResultObj,
             fetchResultsFileName: fetchResultsFileObj,
+            baselineBranch: options.baselineBranch || ''
         },
         cliVersion: version,
         totalSnapshots: -1,

@@ -17,6 +17,8 @@ program
     .description('CLI to help you run your SmartUI tests on LambdaTest platform')
     .version(`v${version}`)
     .option('-c --config <filepath>', 'Config file path')
+    .option('--markBaseline', 'Mark this build baseline')
+    .option('--baselineBranch <string>', 'Mark this build baseline')
     .addCommand(exec)
     .addCommand(capture)
     .addCommand(configWeb)

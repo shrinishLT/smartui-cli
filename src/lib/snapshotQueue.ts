@@ -350,7 +350,7 @@ export default class Queue {
                     } else {
                         if (!this.ctx.build?.id) {
                             if (this.ctx.authenticatedInitially) {
-                                let resp = await this.ctx.client.createBuild(this.ctx.git, this.ctx.config, this.ctx.log, this.ctx.build.name);
+                                let resp = await this.ctx.client.createBuild(this.ctx.git, this.ctx.config, this.ctx.log, this.ctx.build.name, false, false, false);
                                 this.ctx.build = {
                                     id: resp.data.buildId,
                                     name: resp.data.buildName,

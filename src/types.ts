@@ -59,7 +59,8 @@ export interface Context {
         stripExtension?: boolean,
         ignorePattern?: Array<string>,
         fetchResults?: boolean,
-        fetchResultsFileName?: string
+        fetchResultsFileName?: string,
+        baselineBranch?: string
     }
     cliVersion: string;
     totalSnapshots: number;
