@@ -1,6 +1,6 @@
 import { Command } from 'commander'
 import exec from './exec.js'
-import { configWeb, configStatic, configFigma, configWebFigma} from './config.js'
+import { configWeb, configStatic, configFigma, configWebFigma, configAppFigma} from './config.js'
 import capture from './capture.js'
 import upload from './upload.js'
 import { version } from '../../package.json'
@@ -27,6 +27,7 @@ program
     .addCommand(configFigma)
     .addCommand(uploadFigma)
     .addCommand(configWebFigma)
+    .addCommand(configAppFigma)
     .addCommand(uploadWebFigmaCommand)
     .addCommand(uploadAppFigmaCommand)
 

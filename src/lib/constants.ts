@@ -96,13 +96,13 @@ export default {
         // sets navigator.webdriver to false
         '--disable-blink-features=AutomationControlled',
         // disable UA-CH feature
-		`--disable-features=UserAgentClientHint`,
+        `--disable-features=UserAgentClientHint`,
     ],
 
     // discovery request headers
     REQUEST_HEADERS: {
         // `HeadlessChrome` is added to sec-ch-ua, `--disable-features=UserAgentClientHint` doesn't seem to work
-        'sec-ch-ua':'"Chromium";v="129", "Not=A?Brand";v="8"',
+        'sec-ch-ua': '"Chromium";v="129", "Not=A?Brand";v="8"',
         'sec-ch-ua-mobile': '"?0"',
         'sec-ch-ua-platform': '"Windows"'
     },
@@ -384,16 +384,43 @@ export default {
             "depth": 2,
             "configs": [
                 {
-                  "figma_file_token": "<token>",
-                  "figma_ids": ["id-1", "id-2"],
-                  "screenshot_names": ["homepage", "about"]
+                    "figma_file_token": "<token>",
+                    "figma_ids": ["id-1", "id-2"],
+                    "screenshot_names": ["homepage", "about"]
                 },
                 {
-                  "figma_file_token": "<token>",
-                  "figma_ids": ["id-3", "id-4"],
-                  "screenshot_names": ["xyz", "abc"]
+                    "figma_file_token": "<token>",
+                    "figma_ids": ["id-3", "id-4"],
+                    "screenshot_names": ["xyz", "abc"]
                 },
-              ]
+            ]
+        }
+    },
+    APP_FIGMA_CONFIG: {
+        mobile: [
+            {
+                "name": "Pixel 8",
+                "platform": ["android 14"]
+            },
+            {
+                "name": "iPhone 15",
+                "platform": ["ios 17"]
+            }
+        ],
+        figma: {
+            "depth": 2,
+            "configs": [
+                {
+                    "figma_file_token": "<token>",
+                    "figma_ids": ["id-1", "id-2"],
+                    "screenshot_names": ["homepage", "about"]
+                },
+                {
+                    "figma_file_token": "<token>",
+                    "figma_ids": ["id-3", "id-4"],
+                    "screenshot_names": ["xyz", "abc"]
+                },
+            ]
         }
     }
 }
