@@ -22,6 +22,9 @@ export default async (ctx: Context): Promise<string> => {
 
     const responseData = await ctx.client.processWebFigma(requestBody, ctx.log);
     ctx.log.debug("responseData : "+  JSON.stringify(responseData));
+    if (responseData && responseData.error && responseData.error.message) {
+      throw new Error(responseData.error.message);
+    }
 
     if (responseData.data.message == "success") {
       results = responseData.data.message;
