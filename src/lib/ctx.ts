@@ -60,6 +60,10 @@ export default (options: Record<string, string>): Context => {
             fetchResultsFileObj = ''
         }
         buildNameObj = options.buildName || ''
+        if (options.userName && options.accessKey) {
+            env.LT_USERNAME = options.userName
+            env.LT_ACCESS_KEY = options.accessKey
+        }
     } catch (error: any) {
         console.log(`[smartui] Error: ${error.message}`);
         process.exit();

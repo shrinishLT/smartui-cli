@@ -22,6 +22,8 @@ command
     .option('-P, --port <number>', 'Port number for the server')
     .option('--fetch-results [filename]', 'Fetch results and optionally specify an output file, e.g., <filename>.json')
     .option('--buildName <string>', 'Specify the build name')
+    .option('--userName <string>', 'Specify the LT username')
+    .option('--accessKey <string>', 'Specify the LT accesskey')
     .action(async function(execCommand, _, command) {
         const options = command.optsWithGlobals();
         if (options.buildName === '') {
