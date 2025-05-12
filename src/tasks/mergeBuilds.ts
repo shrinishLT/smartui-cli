@@ -11,10 +11,33 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
 
             try {
                 let resp
-                if (ctx.mergeByBranch) {
-                    resp = await ctx.client.mergeBuildsByBuildId(ctx.mergeBuildSourceId, ctx.mergeBuildTargetId, ctx.mergeByBranch, ctx.mergeByBuild, ctx.mergeBranchSource, ctx.mergeBranchTarget, '', '', ctx.git, ctx);
+                if (ctx.mergeByBranch) {    
+                    ctx.git.branch = ctx.mergeBranchTarget
+                    const requestData = {
+                        source: ctx.mergeBuildSourceId,
+                        target: ctx.mergeBuildTargetId,
+                        byBranch: ctx.mergeByBranch,
+                        byBuildName: ctx.mergeByBuild,
+                        sourceBranchName: ctx.mergeBranchSource,
+                        targetBranchName: ctx.mergeBranchTarget,
+                        sourceBuildName: '',
+                        targetBuildName: '',
+                        git: ctx.git
+                    };
+                    resp = await ctx.client.mergeBuildsByBuildId(requestData, ctx);
                 } else {
-                    resp = await ctx.client.mergeBuildsByBuildId(ctx.mergeBuildSourceId, ctx.mergeBuildTargetId, ctx.mergeByBranch, ctx.mergeByBuild, '', '', ctx.mergeBuildSource, ctx.mergeBuildTarget, ctx.git, ctx);
+                    const requestData = {
+                        source: ctx.mergeBuildSourceId,
+                        target: ctx.mergeBuildTargetId,
+                        byBranch: ctx.mergeByBranch,
+                        byBuildName: ctx.mergeByBuild,
+                        sourceBranchName: '',
+                        targetBranchName: '',
+                        sourceBuildName: ctx.mergeBuildSource,
+                        targetBuildName: ctx.mergeBuildTarget,
+                        git: ctx.git
+                    };
+                    resp = await ctx.client.mergeBuildsByBuildId(requestData, ctx);
                 }
                 if (resp && resp.data && resp.data.message) {
                     ctx.log.debug(`${resp.data.message}`)

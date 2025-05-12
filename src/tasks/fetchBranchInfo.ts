@@ -14,7 +14,15 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                     ctx.log.error(`Merging two similar branch is not possible`)
                     throw new Error(`Merging two similar branch is not possible`);
                 }
-                let resp = await ctx.client.fetchBranchInfo(ctx.mergeBranchSource, ctx.mergeBranchTarget, ctx);
+
+                const requestData = {
+                    source: ctx.mergeBranchSource,
+                    target: ctx.mergeBranchTarget,
+                    byBranch: ctx.mergeByBranch,
+                    byBuild: ctx.mergeByBuild,
+                };
+                
+                let resp = await ctx.client.fetchBuildInfo(requestData, ctx);
                 if (resp && resp.data && resp.data.source && resp.data.target) {
                     ctx.mergeBuildSourceId = resp.data.source
                     ctx.mergeBuildTargetId = resp.data.target

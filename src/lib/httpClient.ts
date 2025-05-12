@@ -560,46 +560,19 @@ export default class httpClient {
         }, log);
     }
 
-    fetchBranchInfo(source: string, target: string, ctx: Context) {
-        return this.request({
-            url: `/fetchBranchInfo`,
-            method: 'GET',
-            data: {
-                source,
-                target
-            }
-        }, ctx.log)
-    }
-
-    fetchBuildInfo(source: string, target: string, ctx: Context) {
+    fetchBuildInfo(requestData: any, ctx: Context) {
         return this.request({
             url: `/fetchBuildInfo`,
             method: 'GET',
-            data: {
-                source,
-                target
-            }
-        }, ctx.log)
+            data: requestData
+        }, ctx.log);
     }
 
-    mergeBuildsByBuildId(source: string, target: string, byBranch: boolean, byBuildName: boolean, sourceBranchName: string, targetBranchName: string, sourceBuildName: string, targetBuildName: string, git: Git, ctx: Context) {
-        if (byBranch) {
-            git.branch = targetBranchName
-        }
+    mergeBuildsByBuildId(requestData: any, ctx: Context) {
         return this.request({
             url: `/mergeBuilds`,
             method: 'POST',
-            data: {
-                source,
-                target,
-                byBranch,
-                byBuildName,
-                sourceBranchName,
-                targetBranchName,
-                sourceBuildName,
-                targetBuildName,
-                git
-            }
+            data: requestData
         }, ctx.log)
     }
 }
