@@ -330,7 +330,7 @@ export default class httpClient {
                     type: ctx.testType,
                     source: 'cli'
                 },
-                async: false,
+                doRemoteDiscovery: snapshot.options.doRemoteDiscovery,
                 discoveryErrors: discoveryErrors,
             }
         }, ctx.log)
@@ -352,7 +352,7 @@ export default class httpClient {
                     type: ctx.testType,
                     source: 'cli'
                 },
-                async: false,
+                doRemoteDiscovery: snapshot.options.doRemoteDiscovery,
                 discoveryErrors: discoveryErrors,
             }
         }, ctx.log)

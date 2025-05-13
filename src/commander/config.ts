@@ -1,10 +1,11 @@
 import { Command } from 'commander'
-import { createConfig, createWebStaticConfig, createFigmaConfig, createWebFigmaConfig } from '../lib/config.js'
+import { createConfig, createWebStaticConfig, createFigmaConfig, createWebFigmaConfig, createAppFigmaConfig } from '../lib/config.js'
 
 export const configWeb = new Command();
 export const configStatic = new Command();
 export const configFigma = new Command();
 export const configWebFigma = new Command();
+export const configAppFigma = new Command();
 
 
 configWeb
@@ -39,3 +40,10 @@ configWebFigma
         createWebFigmaConfig(filepath);
     })
 
+configAppFigma
+    .name('config:create-figma-app')
+    .description('Create figma config file for mobile apps')
+    .argument('[filepath]', 'Optional config filepath')
+    .action(async function(filepath, options) {
+        createAppFigmaConfig(filepath);
+    })

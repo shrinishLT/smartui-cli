@@ -627,8 +627,125 @@ const FigmaWebConfigSchema: JSONSchemaType<Object> = {
     additionalProperties: false,
 };
 
+const FigmaAppConfigSchema: JSONSchemaType<Object> = {
+    type: "object",
+    "properties": {
+        "web": {
+            "type": "object",
+            "properties": {
+                browsers: {
+                    type: "array",
+                    items: { type: "string", enum: [constants.CHROME, constants.FIREFOX, constants.SAFARI, constants.EDGE] },
+                    uniqueItems: true,
+                    maxItems: 4,
+                    errorMessage: `allowed browsers - ${constants.CHROME}, ${constants.FIREFOX}, ${constants.SAFARI}, ${constants.EDGE}`
+                },
+                "viewports": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "minItems": 1
+                    }
+                }
+            },
+            "required": ["browsers"]
+        },
+        "mobile": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    name: {
+                        type: "string",
+                        minLength: 1,
+                        enum: Object.keys(constants.SUPPORTED_MOBILE_DEVICES),
+                        errorMessage: "unsupported mobile device name"
+                    },
+                    "platform": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        uniqueItems: true
+                    },
+                    orientation: {
+                        type: "string",
+                        enum: [constants.MOBILE_ORIENTATION_PORTRAIT, constants.MOBILE_ORIENTATION_LANDSCAPE],
+                        errorMessage: `Invalid config; orientation must be ${constants.MOBILE_ORIENTATION_PORTRAIT}/${constants.MOBILE_ORIENTATION_LANDSCAPE}`
+                    }
+                },
+                "required": ["name"]
+            },
+            uniqueItems: true,
+        },
+        "figma": {
+            "type": "object",
+            "properties": {
+                depth: {
+                    type: "integer",
+                    minimum: 2,
+                    errorMessage: "Depth must be an integer and greater than 1"
+                },
+                "configs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "figma_file_token": {
+                                "type": "string",
+                                minLength: 1,
+                                errorMessage: "figma_file_token is mandatory and cannot be empty"
+
+                            },
+                            "figma_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    minLength: 1,
+                                    errorMessage: "Each ID in figma_ids must be a non-empty string"
+                                },
+                                minItems: 1,
+                                uniqueItems: true,
+                                errorMessage: {
+                                    type: "figma_ids must be an array of strings",
+                                    minItems: "figma_ids cannot be empty",
+                                    uniqueItems: "figma_ids must contain unique values"
+                                }
+                            },
+                            "screenshot_names": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                uniqueItems: false
+                            }
+                        },
+                        "required": ["figma_file_token", "figma_ids"]
+                    },
+                    uniqueItems: true,
+                    errorMessage: {
+                        uniqueItems: "Each entry in the figma configs must be unique"
+                    }
+                }
+            },
+            "required": ["configs"]
+        },
+        smartIgnore: {
+            type: "boolean",
+            errorMessage: "Invalid config; smartIgnore must be true/false"
+        }
+    },
+    "required": ["mobile", "figma"],
+    additionalProperties: false,
+};
+
 export const validateConfig = ajv.compile(ConfigSchema);
 export const validateWebStaticConfig = ajv.compile(WebStaticConfigSchema);
 export const validateSnapshot = ajv.compile(SnapshotSchema);
 export const validateFigmaDesignConfig = ajv.compile(FigmaDesignConfigSchema);
 export const validateWebFigmaConfig = ajv.compile(FigmaWebConfigSchema);
+export const validateAppFigmaConfig = ajv.compile(FigmaAppConfigSchema);

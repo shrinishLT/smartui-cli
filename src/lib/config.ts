@@ -118,9 +118,43 @@ export function verifyFigmaWebConfig(ctx: Context) {
         throw new Error("Found duplicate screenshot names in figma config");
     }
 
-    return true;
-};
+    let mobileConfig = ctx.config?.mobile || {}
+    // Iterate over mobileConfig array and get viewport for each device
+    if (Array.isArray(mobileConfig)) {
+        for (const config of mobileConfig) {
+            const deviceName = config.name;
+            if (constants.SUPPORTED_MOBILE_DEVICES[deviceName]) {
+                const deviceData = constants.SUPPORTED_MOBILE_DEVICES[deviceName];
+                config.width = deviceData.viewport.width;
+                config.height = deviceData.viewport.height;
+            }
+        }
+    }
+}
 
 function isValidArray(input) {
     return Array.isArray(input) && input.length > 0;
 }
+
+
+export function createAppFigmaConfig(filepath: string) {
+    // default filepath
+    filepath = filepath || '.smartui.json';
+    let filetype = path.extname(filepath);
+    if (filetype != '.json') {
+        console.log('Error: figma app config file must have .json extension');
+        return
+    }
+
+    // verify the file does not already exist
+    if (fs.existsSync(filepath)) {
+        console.log(`Error: figma app config already exists: ${filepath}`);
+        console.log(`To create a new figma app config, please specify the file name like: 'smartui config:create-figma-app <fileName>.json'`);
+        return
+    }
+
+    // write stringified default config options to the filepath
+    fs.mkdirSync(path.dirname(filepath), { recursive: true });
+    fs.writeFileSync(filepath, JSON.stringify(constants.APP_FIGMA_CONFIG, null, 2) + '\n');
+    console.log(`Created figma app config: ${filepath}`);
+};
