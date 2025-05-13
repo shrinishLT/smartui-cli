@@ -19,6 +19,7 @@ program
     .option('-c --config <filepath>', 'Config file path')
     .option('--markBaseline', 'Mark this build baseline')
     .option('--baselineBranch <string>', 'Mark this build baseline')
+    .option('--baselineBuild <string>', 'Mark this build baseline')
     .addCommand(exec)
     .addCommand(capture)
     .addCommand(configWeb)

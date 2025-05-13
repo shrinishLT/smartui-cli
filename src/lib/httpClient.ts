@@ -202,7 +202,7 @@ export default class httpClient {
         }
     }
 
-    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean, smartGit: boolean, markBaseline: boolean) {
+    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean, smartGit: boolean, markBaseline: boolean, baselineBuild: string) {
         return this.request({
             url: '/build',
             method: 'POST',
@@ -213,7 +213,8 @@ export default class httpClient {
                 isStartExec,
                 packageVersion: pkgJSON.version,
                 smartGit,
-                markBaseline
+                markBaseline,
+                baselineBuild
             }
         }, log)
     }
