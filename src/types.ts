@@ -33,8 +33,8 @@ export interface Context {
         figma?: FigmaWebConfig;
         ignoreHTTPSErrors : boolean;
         skipBuildCreation?: boolean;
-        tunnel?: boolean;
-        tunnelName?: string;
+        tunnel: tunnelConfig | undefined;
+        userAgent?: string;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -69,7 +69,9 @@ export interface Context {
     isSnapshotCaptured ?: boolean;
     sessionCapabilitiesMap?: Map<string, any[]>;
     buildToSnapshotCountMap?: Map<string, number>;
-    fetchResultsForBuild?: Array<string>
+    fetchResultsForBuild?: Array<string>;
+    orgId?: number;
+    userId?: number;
 }
 
 export interface Env {
@@ -175,7 +177,8 @@ export interface MobileConfig {
 export type WebStaticConfig = Array<{
     name: string;
     url: string;
-    waitForTimeout?: number
+    waitForTimeout?: number;
+    userAgent?: string;
 }>;
 
 export type FigmaConfigItem = {
@@ -191,6 +194,21 @@ export type FigmaDesignConfig = {
 export interface basicAuth {
     username: string;
     password: string;
+}
+
+export interface tunnelConfig {
+    type: string;
+    tunnelName: string;
+    user: string;
+    key: string;
+    port: number;
+    proxyHost: string;
+    proxyPort: number;
+    proxyUser: string;
+    proxyPass: string;
+    dir: string;
+    v: boolean;
+    logFile: string;
 }
 
 export interface FigmaWebConfig {

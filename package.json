@@ -1,6 +1,6 @@
 {
   "name": "@lambdatest/smartui-cli",
-  "version": "4.1.7-beta.5",
+  "version": "4.1.11-beta.0",
   "description": "A command line interface (CLI) to run SmartUI tests on LambdaTest",
   "files": [
     "dist/**/*"
@@ -30,6 +30,7 @@
     "@types/cross-spawn": "^6.0.4",
     "@types/node": "^20.8.9",
     "@types/which": "^3.0.2",
+    "@lambdatest/node-tunnel": "^4.0.9",
     "ajv": "^8.12.0",
     "ajv-errors": "^3.0.0",
     "axios": "^1.6.0",

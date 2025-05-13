@@ -3,7 +3,7 @@ import { Snapshot, Context } from "../types.js";
 import constants from "./constants.js";
 import processSnapshot, {prepareSnapshot} from "./processSnapshot.js"
 import { v4 as uuidv4 } from 'uuid';
-import { startPolling } from "./utils.js";
+import { startPolling, stopTunnelHelper } from "./utils.js";
 
 export default class Queue {
     private snapshots: Array<Snapshot> = [];
@@ -272,7 +272,7 @@ export default class Queue {
                 this.processingSnapshot = snapshot?.name;
                 let drop = false;
 
-                if (this.ctx.isStartExec) {
+                if (this.ctx.isStartExec && !this.ctx.config.tunnel) {
                     this.ctx.log.info(`Processing Snapshot: ${snapshot?.name}`);
                 }
 
@@ -359,6 +359,9 @@ export default class Queue {
                                     useKafkaFlow: resp.data.useKafkaFlow || false,
                                 }
                             } else {
+                                if (this.ctx.config.tunnel && this.ctx.config.tunnel?.type === 'auto') {
+                                    await stopTunnelHelper(this.ctx)
+                                }
                                 throw new Error('SmartUI capabilities are missing in env variables or in driver capabilities');
                             }
                             if (this.ctx.options.fetchResults) {

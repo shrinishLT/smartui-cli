@@ -4,14 +4,17 @@ import constants from './constants.js';
 import chalk from 'chalk';
 import axios from 'axios';
 import fs from 'fs';
-
 import { globalAgent } from 'http';
 import { promisify } from 'util'
-const sleep = promisify(setTimeout);
 import { build } from 'tsup';
+
+var lambdaTunnel = require('@lambdatest/node-tunnel');
+const sleep = promisify(setTimeout);
 
 // let isPollingActive = false;
 let globalContext: Context;
+
+let tunnelInstance;
 export const setGlobalContext = (newContext: Context): void => {
     globalContext = newContext;
 };
@@ -25,29 +28,29 @@ export function delDir(dir: string): void {
 export function scrollToBottomAndBackToTop({
     frequency = 100,
     timing = 8,
-    remoteWindow = window 
+    remoteWindow = window
 } = {}): Promise<void> {
     return new Promise(resolve => {
         let scrolls = 1;
         let scrollLength = remoteWindow.document.body.scrollHeight / frequency;
-    
+
         (function scroll() {
             let scrollBy = scrollLength * scrolls;
 
             remoteWindow.setTimeout(() => {
-                    remoteWindow.scrollTo(0, scrollBy);
-            
-                    if (scrolls < frequency) {
-                        scrolls += 1;
-                        scroll();
-                    }
-            
-                    if (scrolls === frequency) {
-                        remoteWindow.setTimeout(() => {
-                            remoteWindow.scrollTo(0,0)
-                            resolve();
-                        }, timing);
-                    }    
+                remoteWindow.scrollTo(0, scrollBy);
+
+                if (scrolls < frequency) {
+                    scrolls += 1;
+                    scroll();
+                }
+
+                if (scrolls === frequency) {
+                    remoteWindow.setTimeout(() => {
+                        remoteWindow.scrollTo(0, 0)
+                        resolve();
+                    }, timing);
+                }
             }, timing);
         })();
     });
@@ -72,7 +75,7 @@ export async function launchBrowsers(ctx: Context): Promise<Record<string, Brows
                     break;
                 case constants.EDGE:
                     launchOptions.args = ['--headless=new'];
-                    browsers[constants.EDGE] = await chromium.launch({channel: constants.EDGE_CHANNEL, ...launchOptions});
+                    browsers[constants.EDGE] = await chromium.launch({ channel: constants.EDGE_CHANNEL, ...launchOptions });
                     break;
             }
         }
@@ -91,14 +94,14 @@ export async function closeBrowsers(browsers: Record<string, Browser>): Promise<
     for (const browserName of Object.keys(browsers)) await browsers[browserName]?.close();
 }
 
-export function getWebRenderViewports(ctx: Context): Array<Record<string,any>> {
-    let webRenderViewports: Array<Record<string,any>> = [];
+export function getWebRenderViewports(ctx: Context): Array<Record<string, any>> {
+    let webRenderViewports: Array<Record<string, any>> = [];
 
     if (ctx.config.web) {
         for (const viewport of ctx.config.web.viewports) {
             webRenderViewports.push({
                 viewport,
-                viewportString: `${viewport.width}${viewport.height ? 'x'+viewport.height : ''}`,
+                viewportString: `${viewport.width}${viewport.height ? 'x' + viewport.height : ''}`,
                 fullPage: viewport.height ? false : true,
                 device: false
             })
@@ -108,8 +111,8 @@ export function getWebRenderViewports(ctx: Context): Array<Record<string,any>> {
     return webRenderViewports
 }
 
-export function getWebRenderViewportsForOptions(options: any): Array<Record<string,any>> {
-    let webRenderViewports: Array<Record<string,any>> = [];
+export function getWebRenderViewportsForOptions(options: any): Array<Record<string, any>> {
+    let webRenderViewports: Array<Record<string, any>> = [];
 
     if (options.web && Array.isArray(options.web.viewports)) {
         for (const viewport of options.web.viewports) {
@@ -117,14 +120,14 @@ export function getWebRenderViewportsForOptions(options: any): Array<Record<stri
                 let viewportObj: { width: number; height?: number } = {
                     width: viewport[0]
                 };
-                
+
                 if (viewport.length > 1) {
                     viewportObj.height = viewport[1];
                 }
 
                 webRenderViewports.push({
                     viewport: viewportObj,
-                    viewportString: `${viewport[0]}${viewport[1] ? 'x'+viewport[1] : ''}`,
+                    viewportString: `${viewport[0]}${viewport[1] ? 'x' + viewport[1] : ''}`,
                     fullPage: viewport.length === 1,
                     device: false
                 });
@@ -135,7 +138,7 @@ export function getWebRenderViewportsForOptions(options: any): Array<Record<stri
     return webRenderViewports;
 }
 
-export function getMobileRenderViewports(ctx: Context): Record<string,any> {
+export function getMobileRenderViewports(ctx: Context): Record<string, any> {
     let mobileRenderViewports: Record<string, Array<Record<string, any>>> = {}
     mobileRenderViewports[constants.MOBILE_OS_IOS] = [];
     mobileRenderViewports[constants.MOBILE_OS_ANDROID] = [];
@@ -159,7 +162,7 @@ export function getMobileRenderViewports(ctx: Context): Record<string,any> {
     return mobileRenderViewports
 }
 
-export function getMobileRenderViewportsForOptions(options: any): Record<string,any> {
+export function getMobileRenderViewportsForOptions(options: any): Record<string, any> {
     let mobileRenderViewports: Record<string, Array<Record<string, any>>> = {}
     mobileRenderViewports[constants.MOBILE_OS_IOS] = [];
     mobileRenderViewports[constants.MOBILE_OS_ANDROID] = [];
@@ -173,7 +176,7 @@ export function getMobileRenderViewportsForOptions(options: any): Record<string,
 
             // Check if fullPage is specified, otherwise use default
             let fullPage
-            if (options.mobile.fullPage === undefined || options.mobile.fullPage){
+            if (options.mobile.fullPage === undefined || options.mobile.fullPage) {
                 fullPage = true
             } else {
                 fullPage = false
@@ -192,10 +195,10 @@ export function getMobileRenderViewportsForOptions(options: any): Record<string,
     return mobileRenderViewports
 }
 
-export function getRenderViewports(ctx: Context): Array<Record<string,any>> {
+export function getRenderViewports(ctx: Context): Array<Record<string, any>> {
     let mobileRenderViewports = getMobileRenderViewports(ctx);
     let webRenderViewports = getWebRenderViewports(ctx);
-    
+
     // Combine arrays ensuring web viewports are first
     return [
         ...webRenderViewports,
@@ -204,10 +207,10 @@ export function getRenderViewports(ctx: Context): Array<Record<string,any>> {
     ];
 }
 
-export function getRenderViewportsForOptions(options: any): Array<Record<string,any>> {
+export function getRenderViewportsForOptions(options: any): Array<Record<string, any>> {
     let mobileRenderViewports = getMobileRenderViewportsForOptions(options);
     let webRenderViewports = getWebRenderViewportsForOptions(options);
-    
+
     // Combine arrays ensuring web viewports are first
     return [
         ...webRenderViewports,
@@ -241,7 +244,7 @@ export async function startPolling(ctx: Context, build_id: string, baseline: boo
             clearInterval(intervalId);
             return;
         }
-        
+
         try {
             let resp;
             if (build_id) {
@@ -341,6 +344,117 @@ export async function startPingPolling(ctx: Context): Promise<void> {
         }
     }, 10 * 60 * 1000); // 10 minutes interval
 }
+
+export async function startTunnelBinary(ctx: Context) {
+    let tunnelConfig = ctx.config.tunnel
+    let tunnelArguments = {
+        user: tunnelConfig.user || ctx.env.LT_USERNAME || '',
+        key: tunnelConfig.key || ctx.env.LT_ACCESS_KEY || ''
+    };
+
+    ctx.config.tunnel.user = tunnelConfig?.user || ctx.env.LT_USERNAME || ''
+    ctx.config.tunnel.key = tunnelConfig?.key || ctx.env.LT_ACCESS_KEY || ''
+
+    if (tunnelConfig.port) {
+        tunnelArguments.port = tunnelConfig.port;
+    }
+    if (tunnelConfig?.proxyHost) {
+        tunnelArguments.proxyHost = tunnelConfig.proxyHost
+    }
+    if (tunnelConfig?.proxyPort) {
+        tunnelArguments.proxyPort = tunnelConfig.proxyPort
+    }
+    if (tunnelConfig?.proxyUser) {
+        tunnelArguments.proxyUser = tunnelConfig.proxyUser
+    }
+    if (tunnelConfig?.proxyPass) {
+        tunnelArguments.proxyPass = tunnelConfig.proxyPass
+    }
+    if (tunnelConfig?.dir) {
+        tunnelArguments.dir = tunnelConfig.dir
+    }
+    if (tunnelConfig?.v) {
+        tunnelArguments.v = tunnelConfig.v
+        tunnelArguments.logLevel = 'debug'
+    }
+    if (tunnelConfig?.logFile) {
+        tunnelArguments.logFile = tunnelConfig.logFile
+    }
+
+    if (tunnelConfig?.tunnelName) {
+        tunnelArguments.tunnelName = tunnelConfig.tunnelName
+    } else {
+        const randomNumber = Math.floor(1000000 + Math.random() * 9000000);
+        let randomTunnelName = `smartui-cli-Node-tunnel-${randomNumber}`
+        tunnelArguments.tunnelName = randomTunnelName;
+        ctx.config.tunnel.tunnelName = randomTunnelName
+    }
+    
+    ctx.log.debug(`tunnel config ${JSON.stringify(tunnelArguments)}`)
+
+    if (ctx.config.tunnel?.type === 'auto') {
+        tunnelInstance = new lambdaTunnel();
+        const istunnelStarted = await tunnelInstance.start(tunnelArguments);
+        ctx.log.debug('Tunnel is started Successfully with status ' + istunnelStarted);
+        const tunnelRunningStatus = await tunnelInstance.isRunning();
+        ctx.log.debug('Running status of tunnel after start ? ' + tunnelRunningStatus);
+    }
+}
+
+export async function startPollingForTunnel(ctx: Context, build_id: string, baseline: boolean, projectToken: string): Promise<void> {
+    const intervalId = setInterval(async () => {
+        try {
+            let resp;
+            if (build_id) {
+                resp = await ctx.client.getScreenshotData(build_id, baseline, ctx.log, projectToken);
+            } else if (ctx.build && ctx.build.id) {
+                resp = await ctx.client.getScreenshotData(ctx.build.id, ctx.build.baseline, ctx.log, '');
+            } else {
+                return;
+            }
+
+            if (!resp.build) {
+                ctx.log.info("Error: Build data is null.");
+                clearInterval(intervalId);
+
+                const tunnelRunningStatus = await tunnelInstance.isRunning();
+                ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
+
+                const status = await tunnelInstance.stop();
+                ctx.log.debug('Tunnel is Stopped ? ' + status);
+                
+                return;
+            }
+
+            if (resp.build.build_status_ind === constants.BUILD_COMPLETE || resp.build.build_status_ind === constants.BUILD_ERROR) {
+                clearInterval(intervalId);
+
+                const tunnelRunningStatus = await tunnelInstance.isRunning();
+                ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
+
+                const status = await tunnelInstance.stop();
+                ctx.log.debug('Tunnel is Stopped ? ' + status);
+
+            }
+        } catch (error: any) {
+            if (error.message.includes('ENOTFOUND')) {
+                ctx.log.error('Error: Network error occurred while fetching build status while polling. Please check your connection and try again.');
+                clearInterval(intervalId);
+            } else {
+                ctx.log.error(`Error fetching build status while polling: ${error.message}`);
+            }
+            clearInterval(intervalId);
+        }
+    }, 5000);
+}
+
+export async function stopTunnelHelper(ctx: Context) {
+    const tunnelRunningStatus = await tunnelInstance.isRunning();
+    ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
+
+    const status = await tunnelInstance.stop();
+    ctx.log.debug('Tunnel is Stopped ? ' + status);
+} 
 
 
 
