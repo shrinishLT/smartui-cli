@@ -11,12 +11,19 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
 
             try {
                 let resp = await ctx.client.createBuild(ctx.git, ctx.config, ctx.log, ctx.build.name, ctx.isStartExec, ctx.env.SMART_GIT, ctx.options.markBaseline, ctx.options.baselineBuild);
-                ctx.build = {
-                    id: resp.data.buildId,
-                    name: resp.data.buildName,
-                    url: resp.data.buildURL,
-                    baseline: resp.data.baseline,
-                    useKafkaFlow: resp.data.useKafkaFlow || false,
+                if (resp && resp.data && resp.data.buildId) {
+                    ctx.build = {
+                        id: resp.data.buildId,
+                        name: resp.data.buildName,
+                        url: resp.data.buildURL,
+                        baseline: resp.data.baseline,
+                        useKafkaFlow: resp.data.useKafkaFlow || false,
+                    }
+                } else if (resp && resp.error) {
+                    if (resp.error.message) {
+                        ctx.log.error(`Error while creation of build: ${resp.error.message}`)
+                        throw new Error(`Error while creation of build: ${resp.error.message}`);
+                    }
                 }
                 task.output = chalk.gray(`build id: ${resp.data.buildId}`);
                 task.title = 'SmartUI build created'
