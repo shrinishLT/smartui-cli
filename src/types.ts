@@ -59,7 +59,9 @@ export interface Context {
         stripExtension?: boolean,
         ignorePattern?: Array<string>,
         fetchResults?: boolean,
-        fetchResultsFileName?: string
+        fetchResultsFileName?: string,
+        baselineBranch?: string,
+        baselineBuild?: string
     }
     cliVersion: string;
     totalSnapshots: number;
@@ -72,6 +74,14 @@ export interface Context {
     fetchResultsForBuild?: Array<string>;
     orgId?: number;
     userId?: number;
+    mergeBranchSource?: string;
+    mergeBranchTarget?: string;
+    mergeBuildSource?: string;
+    mergeBuildTarget?: string;
+    mergeBuildSourceId?: string;
+    mergeBuildTargetId?: string;
+    mergeByBranch?: boolean;
+    mergeByBuild?: boolean;
 }
 
 export interface Env {
@@ -94,6 +104,7 @@ export interface Env {
     SMARTUI_API_PROXY: string | undefined;
     SMARTUI_API_SKIP_CERTIFICATES: boolean;
     USE_REMOTE_DISCOVERY: boolean;
+    SMART_GIT: boolean;
 }
 
 export interface Snapshot {

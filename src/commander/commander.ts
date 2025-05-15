@@ -8,6 +8,7 @@ import { uploadFigma, uploadWebFigmaCommand,uploadAppFigmaCommand  } from './upl
 import startServer from './server.js';
 import stopServer from './stopServer.js'
 import ping from './ping.js'
+import merge from './merge.js'
 
 const program = new Command();
 
@@ -16,6 +17,9 @@ program
     .description('CLI to help you run your SmartUI tests on LambdaTest platform')
     .version(`v${version}`)
     .option('-c --config <filepath>', 'Config file path')
+    .option('--markBaseline', 'Mark this build baseline')
+    .option('--baselineBranch <string>', 'Mark this build baseline')
+    .option('--baselineBuild <string>', 'Mark this build baseline')
     .addCommand(exec)
     .addCommand(capture)
     .addCommand(configWeb)
@@ -23,6 +27,7 @@ program
     .addCommand(upload)
     .addCommand(startServer)
     .addCommand(stopServer)
+    .addCommand(merge)
     .addCommand(ping)
     .addCommand(configFigma)
     .addCommand(uploadFigma)

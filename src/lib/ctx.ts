@@ -144,6 +144,8 @@ export default (options: Record<string, string>): Context => {
             ignorePattern: ignoreFilePattern,
             fetchResults: fetchResultObj,
             fetchResultsFileName: fetchResultsFileObj,
+            baselineBranch: options.baselineBranch || '',
+            baselineBuild: options.baselineBuild || ''
         },
         cliVersion: version,
         totalSnapshots: -1,
@@ -153,6 +155,14 @@ export default (options: Record<string, string>): Context => {
         buildToSnapshotCountMap: new Map<string, number>(),
         fetchResultsForBuild: new Array<string>,
         orgId: 0,
-        userId: 0
+        userId: 0,
+        mergeBranchSource: '',
+        mergeBranchTarget: '',
+        mergeBuildSource: '',
+        mergeBuildTarget: '',
+        mergeBuildSourceId: '',
+        mergeBuildTargetId: '',
+        mergeByBranch: false,
+        mergeByBuild: false
     }
 }

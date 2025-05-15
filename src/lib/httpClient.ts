@@ -202,7 +202,7 @@ export default class httpClient {
         }
     }
 
-    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean) {
+    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean, smartGit: boolean, markBaseline: boolean, baselineBuild: string) {
         return this.request({
             url: '/build',
             method: 'POST',
@@ -211,7 +211,10 @@ export default class httpClient {
                 config,
                 buildName,
                 isStartExec,
-                packageVersion: pkgJSON.version
+                packageVersion: pkgJSON.version,
+                smartGit,
+                markBaseline,
+                baselineBuild
             }
         }, log)
     }
@@ -556,5 +559,21 @@ export default class httpClient {
             },
             params: { buildId }
         }, log);
+    }
+
+    fetchBuildInfo(requestData: any, ctx: Context) {
+        return this.request({
+            url: `/fetchBuildInfo`,
+            method: 'GET',
+            data: requestData
+        }, ctx.log);
+    }
+
+    mergeBuildsByBuildId(requestData: any, ctx: Context) {
+        return this.request({
+            url: `/mergeBuilds`,
+            method: 'POST',
+            data: requestData
+        }, ctx.log)
     }
 }
