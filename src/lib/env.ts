@@ -20,7 +20,8 @@ export default (): Env => {
         PROJECT_NAME,
         SMARTUI_API_PROXY,
         SMARTUI_API_SKIP_CERTIFICATES,
-        USE_REMOTE_DISCOVERY
+        USE_REMOTE_DISCOVERY,
+        SMART_GIT
     } = process.env
         
     return {
@@ -42,6 +43,7 @@ export default (): Env => {
         PROJECT_NAME,
         SMARTUI_API_PROXY,
         SMARTUI_API_SKIP_CERTIFICATES: SMARTUI_API_SKIP_CERTIFICATES === 'true',
-        USE_REMOTE_DISCOVERY: USE_REMOTE_DISCOVERY === 'true'
+        USE_REMOTE_DISCOVERY: USE_REMOTE_DISCOVERY === 'true',
+        SMART_GIT: SMART_GIT === 'true'
     }
 }

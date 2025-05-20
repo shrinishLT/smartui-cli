@@ -26,6 +26,7 @@ export default (options: Record<string, string>): Context => {
     try {
         if (options.config) {
             config = JSON.parse(fs.readFileSync(options.config, 'utf-8'));
+            logger.debug(`Config file ${options.config} loaded: ${JSON.stringify(config, null, 2)}`);
 
             // resolutions supported for backward compatibility
             if (config.web?.resolutions) {
@@ -37,6 +38,8 @@ export default (options: Record<string, string>): Context => {
             if (!validateConfig(config)) {
                 throw new Error(validateConfig.errors[0].message);
             }
+        } else {
+            logger.info("## No config file provided. Using default config.");
         }
         port = parseInt(options.port || '49152', 10);
         if (isNaN(port) || port < 1 || port > 65535) {
@@ -144,6 +147,8 @@ export default (options: Record<string, string>): Context => {
             ignorePattern: ignoreFilePattern,
             fetchResults: fetchResultObj,
             fetchResultsFileName: fetchResultsFileObj,
+            baselineBranch: options.baselineBranch || '',
+            baselineBuild: options.baselineBuild || ''
         },
         cliVersion: version,
         totalSnapshots: -1,
@@ -153,6 +158,14 @@ export default (options: Record<string, string>): Context => {
         buildToSnapshotCountMap: new Map<string, number>(),
         fetchResultsForBuild: new Array<string>,
         orgId: 0,
-        userId: 0
+        userId: 0,
+        mergeBranchSource: '',
+        mergeBranchTarget: '',
+        mergeBuildSource: '',
+        mergeBuildTarget: '',
+        mergeBuildSourceId: '',
+        mergeBuildTargetId: '',
+        mergeByBranch: false,
+        mergeByBuild: false
     }
 }

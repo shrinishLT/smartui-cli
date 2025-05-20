@@ -27,8 +27,19 @@ export function isGitRepo(): boolean {
 }
 
 export default (ctx: Context): Git => {
+	if (ctx.env.SMART_GIT) {
+		ctx.env.BASELINE_BRANCH = ''
+		if (ctx.options.baselineBranch !== '') {
+			ctx.env.SMART_GIT = false
+		}
+	}
 	if (ctx.env.SMARTUI_GIT_INFO_FILEPATH) {
 		let gitInfo = JSON.parse(fs.readFileSync(ctx.env.SMARTUI_GIT_INFO_FILEPATH, 'utf-8'));
+
+		if (ctx.options.markBaseline) {
+			ctx.env.BASELINE_BRANCH = ctx.env.CURRENT_BRANCH || gitInfo.branch || ''
+			ctx.env.SMART_GIT = false
+		}
 
 		return {
 			branch: ctx.env.CURRENT_BRANCH || gitInfo.branch || '',
@@ -36,7 +47,7 @@ export default (ctx: Context): Git => {
 			commitMessage: gitInfo.commit_body || '',
 			commitAuthor: gitInfo.commit_author || '',
 			githubURL: (ctx.env.GITHUB_ACTIONS) ? `${constants.GITHUB_API_HOST}/repos/${process.env.GITHUB_REPOSITORY}/statuses/${gitInfo.commit_id}` : '',
-			baselineBranch: ctx.env.BASELINE_BRANCH || ''
+			baselineBranch: ctx.options.baselineBranch || ctx.env.BASELINE_BRANCH || ''
 		}
 	} else {
 		const splitCharacter = '<##>';
@@ -52,13 +63,18 @@ export default (ctx: Context): Git => {
 		var branch = ctx.env.CURRENT_BRANCH || branchAndTags[0];
 		var tags = branchAndTags.slice(1);
 
+		if (ctx.options.markBaseline) {
+			ctx.env.BASELINE_BRANCH = branch || ''
+			ctx.env.SMART_GIT = false
+		}
+
 		return {
 			branch: branch || '',
 			commitId: res[0] || '',
 			commitMessage: res[2] || '',
 			commitAuthor: res[7] || '',
 			githubURL: (ctx.env.GITHUB_ACTIONS) ? `${constants.GITHUB_API_HOST}/repos/${process.env.GITHUB_REPOSITORY}/statuses/${res[1]}` : '',
-			baselineBranch: ctx.env.BASELINE_BRANCH || ''
+			baselineBranch: ctx.options.baselineBranch || ctx.env.BASELINE_BRANCH || ''
 		};
 	}
 }

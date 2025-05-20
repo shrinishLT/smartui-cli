@@ -12,13 +12,20 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
 
             try {
                 if (ctx.authenticatedInitially && !ctx.config.skipBuildCreation) {
-                    let resp = await ctx.client.createBuild(ctx.git, ctx.config, ctx.log, ctx.build.name, ctx.isStartExec);
-                    ctx.build = {
-                        id: resp.data.buildId,
-                        name: resp.data.buildName,
-                        url: resp.data.buildURL,
-                        baseline: resp.data.baseline,
-                        useKafkaFlow: resp.data.useKafkaFlow || false,
+                    let resp = await ctx.client.createBuild(ctx.git, ctx.config, ctx.log, ctx.build.name, ctx.isStartExec, ctx.env.SMART_GIT, ctx.options.markBaseline, ctx.options.baselineBuild);
+                    if (resp && resp.data && resp.data.buildId) {
+                        ctx.build = {
+                            id: resp.data.buildId,
+                            name: resp.data.buildName,
+                            url: resp.data.buildURL,
+                            baseline: resp.data.baseline,
+                            useKafkaFlow: resp.data.useKafkaFlow || false,
+                        }
+                    } else if (resp && resp.error) {
+                        if (resp.error.message) {
+                            ctx.log.error(`Error while creation of build: ${resp.error.message}`)
+                            throw new Error(`Error while creation of build: ${resp.error.message}`);
+                        }
                     }
                     if (ctx.build.id === '') {
                         ctx.log.debug('Build creation failed: Build ID is empty');
