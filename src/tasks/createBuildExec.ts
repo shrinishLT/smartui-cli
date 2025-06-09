@@ -2,7 +2,7 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import chalk from 'chalk';
 import { updateLogContext } from '../lib/logger.js';
-import { startTunnelBinary, startPollingForTunnel, stopTunnelHelper } from '../lib/utils.js';
+import { startTunnelBinary, startPollingForTunnel, stopTunnelHelper, startPingPolling } from '../lib/utils.js';
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
@@ -43,6 +43,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
 
                 if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                    startPingPolling(ctx);
                     if (ctx.build && ctx.build.id) {
                         startPollingForTunnel(ctx, '', false, '');
                     }
