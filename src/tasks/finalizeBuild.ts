@@ -2,7 +2,7 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import { updateLogContext } from '../lib/logger.js';
 import chalk from 'chalk';
-import { startPolling } from '../lib/utils.js';
+import { startPolling, pingIntervalId } from '../lib/utils.js';
 import { unlinkSync } from 'fs';
 import constants from '../lib/constants.js';
 import fs from 'fs';
@@ -26,6 +26,11 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 throw new Error('Finalize build failed');
             }
             let buildUrls = `build url: ${ctx.build.url}\n`;
+
+            if (pingIntervalId !== null) {
+                clearInterval(pingIntervalId);
+                ctx.log.debug('Ping polling stopped immediately.');
+            }
 
             for (const [sessionId, capabilities] of ctx.sessionCapabilitiesMap.entries()) {
                 try {
