@@ -346,19 +346,21 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                         url: requestUrl,
                         resourceType: request.resourceType(),
                     } 
-    
-                    if (!discoveryErrors.browsers[globalBrowser]){
-                        discoveryErrors.browsers[globalBrowser] = {};                
-                    }
-    
-                    // Check if the discoveryErrors.browsers[globalBrowser] exists, and if not, initialize it
-                    if (discoveryErrors.browsers[globalBrowser] && !discoveryErrors.browsers[globalBrowser][globalViewport]) {
-                        discoveryErrors.browsers[globalBrowser][globalViewport] = [];
-                    }
-    
-                    // Dynamically push the data into the correct browser and viewport
-                    if (discoveryErrors.browsers[globalBrowser]) {
-                        discoveryErrors.browsers[globalBrowser][globalViewport]?.push(data);
+                    
+                    if ((response.status() >= 400 && response.status() < 600) && response.status() !== 0) {
+                        if (!discoveryErrors.browsers[globalBrowser]){
+                            discoveryErrors.browsers[globalBrowser] = {};                
+                        }
+        
+                        // Check if the discoveryErrors.browsers[globalBrowser] exists, and if not, initialize it
+                        if (discoveryErrors.browsers[globalBrowser] && !discoveryErrors.browsers[globalBrowser][globalViewport]) {
+                            discoveryErrors.browsers[globalBrowser][globalViewport] = [];
+                        }
+        
+                        // Dynamically push the data into the correct browser and viewport
+                        if (discoveryErrors.browsers[globalBrowser]) {
+                            discoveryErrors.browsers[globalBrowser][globalViewport]?.push(data);
+                        }
                     }
                 }
             } else {
