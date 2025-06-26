@@ -55,6 +55,7 @@ command
             await tasks.run(ctx);
         } catch (error) {
             console.error('Error during merge operation:', error);
+            process.exitCode = 1;
         }
     });
 

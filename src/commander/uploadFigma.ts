@@ -103,6 +103,7 @@ uploadWebFigmaCommand
             verifyFigmaWebConfig(ctx);
         } catch (error: any) {
             ctx.log.error(chalk.red(`Invalid figma-web config; ${error.message}`));
+            process.exitCode = 1;
             return;
         }
 
@@ -169,6 +170,7 @@ uploadWebFigmaCommand
             verifyFigmaWebConfig(ctx);
         } catch (error: any) {
             ctx.log.error(chalk.red(`Invalid figma-app config; ${error.message}`));
+            process.exitCode = 1;
             return;
         }
 

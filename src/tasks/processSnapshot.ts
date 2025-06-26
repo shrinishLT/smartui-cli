@@ -28,7 +28,10 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
 
                 let output = '';
                 for (let snapshot of ctx.snapshotQueue?.getProcessedSnapshots()) {
-                    if (snapshot.error) output += `${chalk.red('\u{2717}')} ${chalk.gray(`${snapshot.name}\n[error] ${snapshot.error}`)}\n`;
+                    if (snapshot.error){ 
+                        output += `${chalk.red('\u{2717}')} ${chalk.gray(`${snapshot.name}\n[error] ${snapshot.error}`)}\n`;
+                        process.exitCode = 1;
+                    }
                     else output += `${chalk.green('\u{2713}')} ${chalk.gray(snapshot.name)}\n${snapshot.warnings.length ?  chalk.gray(`[warning] ${snapshot.warnings.join('\n[warning] ')}\n`) : ''}`;
                 }
                 task.output = output;
@@ -36,6 +39,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
             } catch (error: any) {
                 ctx.log.debug(error);
                 task.output = chalk.gray(error.message);
+                process.exitCode = 1;
                 throw new Error('Processing of snapshots failed');
             }
         },
