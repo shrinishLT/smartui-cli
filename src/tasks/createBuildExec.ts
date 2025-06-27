@@ -21,6 +21,8 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                             baseline: resp.data.baseline,
                             useKafkaFlow: resp.data.useKafkaFlow || false,
                         }
+                        process.env.SMARTUI_BUILD_ID = resp.data.buildId;
+                        process.env.SMARTUI_BUILD_NAME = resp.data.buildName;
                     } else if (resp && resp.error) {
                         if (resp.error.message) {
                             ctx.log.error(`Error while creation of build: ${resp.error.message}`)
