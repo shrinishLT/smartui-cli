@@ -20,6 +20,7 @@ program
     .option('--markBaseline', 'Mark this build baseline')
     .option('--baselineBranch <string>', 'Mark this build baseline')
     .option('--baselineBuild <string>', 'Mark this build baseline')
+    .option('--githubURL <string>', 'GitHub URL including commitId')
     .addCommand(exec)
     .addCommand(capture)
     .addCommand(configWeb)
