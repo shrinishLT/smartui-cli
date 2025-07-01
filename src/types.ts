@@ -61,7 +61,8 @@ export interface Context {
         fetchResults?: boolean,
         fetchResultsFileName?: string,
         baselineBranch?: string,
-        baselineBuild?: string
+        baselineBuild?: string,
+        githubURL?: string
     }
     cliVersion: string;
     totalSnapshots: number;
