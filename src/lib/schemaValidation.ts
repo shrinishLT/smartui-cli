@@ -2,6 +2,7 @@ import { Snapshot, WebStaticConfig, FigmaDesignConfig } from '../types.js'
 import Ajv, { JSONSchemaType } from 'ajv'
 import addErrors from 'ajv-errors'
 import constants from './constants.js'
+import { request } from 'http';
 
 const ajv = new Ajv({ allErrors: true });
 ajv.addFormat('web-url', {
@@ -161,7 +162,6 @@ const ConfigSchema = {
             errorMessage: {
                 uniqueItems: "Invalid config; duplicates in allowedAssets"
             }
-
         },
         basicAuthorization: {
             type: "object",
@@ -248,6 +248,26 @@ const ConfigSchema = {
             type: "string",
             errorMessage: "User Agent value must be a valid string"
         },
+        requestHeaders: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    key: {
+                        type: "string",
+                        errorMessage: "Invalid config; key is mandatory"
+                    },
+                    value: {
+                        type: "string",
+                        errorMessage: "Invalid config; value is mandatory"
+                    },
+                }
+            },
+            uniqueItems: true,
+            errorMessage: {
+                uniqueItems: "Invalid config; duplicates in requestHeaders"
+            }
+        }
     },
     anyOf: [
         { required: ["web"] },

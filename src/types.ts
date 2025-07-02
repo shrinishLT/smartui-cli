@@ -35,6 +35,7 @@ export interface Context {
         skipBuildCreation?: boolean;
         tunnel: tunnelConfig | undefined;
         userAgent?: string;
+        requestHeaders?: Array<reqHeaders>;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -205,6 +206,11 @@ export type FigmaDesignConfig = {
 export interface basicAuth {
     username: string;
     password: string;
+}
+
+export interface reqHeaders {
+    key: string;
+    value: string;
 }
 
 export interface tunnelConfig {

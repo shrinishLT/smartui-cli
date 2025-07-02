@@ -112,7 +112,8 @@ export default (options: Record<string, string>): Context => {
             ignoreHTTPSErrors: config.ignoreHTTPSErrors ?? false,
             skipBuildCreation: config.skipBuildCreation ?? false,
             tunnel: tunnelObj,
-            userAgent: config.userAgent || ''
+            userAgent: config.userAgent || '',
+            requestHeaders: config.requestHeaders || {}
         },
         uploadFilePath: '',
         webStaticConfig: [],
