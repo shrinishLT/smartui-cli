@@ -270,8 +270,10 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                 requestOptions.headers.Authorization = `Basic ${token}`;
             }
             if (ctx.config.requestHeaders && Array.isArray(ctx.config.requestHeaders)) {
-                ctx.config.requestHeaders.forEach((header: { key: string, value: string }) => {
-                    requestOptions.headers[header.key] = header.value;
+                ctx.config.requestHeaders.forEach((headerObj) => {
+                    Object.entries(headerObj).forEach(([key, value]) => {
+                        requestOptions.headers[key] = value;
+                    });
                 });
             }
 

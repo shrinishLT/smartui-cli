@@ -252,16 +252,8 @@ const ConfigSchema = {
             type: "array",
             items: {
                 type: "object",
-                properties: {
-                    key: {
-                        type: "string",
-                        errorMessage: "Invalid config; key is mandatory"
-                    },
-                    value: {
-                        type: "string",
-                        errorMessage: "Invalid config; value is mandatory"
-                    },
-                }
+                minProperties: 1,
+                additionalProperties: { type: "string" }
             },
             uniqueItems: true,
             errorMessage: {
