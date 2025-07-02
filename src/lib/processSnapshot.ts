@@ -184,6 +184,9 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
       };
 
     let processedOptions: Record<string, any> = {};
+    if (ctx.config.requestHeaders && Array.isArray(ctx.config.requestHeaders)) {
+        processedOptions.requestHeaders = ctx.config.requestHeaders
+    }
 
     let globalViewport = ""
     let globalBrowser = constants.CHROME
