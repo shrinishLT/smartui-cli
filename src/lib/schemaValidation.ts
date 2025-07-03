@@ -2,7 +2,6 @@ import { Snapshot, WebStaticConfig, FigmaDesignConfig } from '../types.js'
 import Ajv, { JSONSchemaType } from 'ajv'
 import addErrors from 'ajv-errors'
 import constants from './constants.js'
-import { request } from 'http';
 
 const ajv = new Ajv({ allErrors: true });
 ajv.addFormat('web-url', {
