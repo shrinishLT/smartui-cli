@@ -35,6 +35,7 @@ export interface Context {
         skipBuildCreation?: boolean;
         tunnel: tunnelConfig | undefined;
         userAgent?: string;
+        requestHeaders?: Array<Record<string, string>>;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;

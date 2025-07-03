@@ -161,7 +161,6 @@ const ConfigSchema = {
             errorMessage: {
                 uniqueItems: "Invalid config; duplicates in allowedAssets"
             }
-
         },
         basicAuthorization: {
             type: "object",
@@ -248,6 +247,18 @@ const ConfigSchema = {
             type: "string",
             errorMessage: "User Agent value must be a valid string"
         },
+        requestHeaders: {
+            type: "array",
+            items: {
+                type: "object",
+                minProperties: 1,
+                additionalProperties: { type: "string" }
+            },
+            uniqueItems: true,
+            errorMessage: {
+                uniqueItems: "Invalid config; duplicates in requestHeaders"
+            }
+        }
     },
     anyOf: [
         { required: ["web"] },
