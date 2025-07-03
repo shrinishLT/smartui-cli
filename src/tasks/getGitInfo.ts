@@ -16,6 +16,9 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
             try {
                 ctx.git = getGitInfo(ctx);
                 task.output = chalk.gray(`branch: ${ctx.git.branch}, commit: ${ctx.git.commitId}, author: ${ctx.git.commitAuthor}`);
+                if (ctx.git.githubURL && ctx.git.githubURL !== '') {
+                    task.output += chalk.gray(`, githubURL: ${ctx.git.githubURL}`);
+                }
                 task.title = 'Fetched git information'
             } catch (error: any) {
                 ctx.log.debug(error);

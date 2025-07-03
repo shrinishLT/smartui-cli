@@ -26,7 +26,8 @@ export default (options: Record<string, string>): Context => {
     try {
         if (options.config) {
             config = JSON.parse(fs.readFileSync(options.config, 'utf-8'));
-            logger.debug(`Config file ${options.config} loaded: ${JSON.stringify(config, null, 2)}`);
+            // TODO: Mask sensitive data of config file
+            // logger.debug(`Config file ${options.config} loaded: ${JSON.stringify(config, null, 2)}`);
 
             // resolutions supported for backward compatibility
             if (config.web?.resolutions) {
@@ -112,7 +113,8 @@ export default (options: Record<string, string>): Context => {
             ignoreHTTPSErrors: config.ignoreHTTPSErrors ?? false,
             skipBuildCreation: config.skipBuildCreation ?? false,
             tunnel: tunnelObj,
-            userAgent: config.userAgent || ''
+            userAgent: config.userAgent || '',
+            requestHeaders: config.requestHeaders || {}
         },
         uploadFilePath: '',
         webStaticConfig: [],
@@ -148,7 +150,8 @@ export default (options: Record<string, string>): Context => {
             fetchResults: fetchResultObj,
             fetchResultsFileName: fetchResultsFileObj,
             baselineBranch: options.baselineBranch || '',
-            baselineBuild: options.baselineBuild || ''
+            baselineBuild: options.baselineBuild || '',
+            githubURL : options.githubURL || ''
         },
         cliVersion: version,
         totalSnapshots: -1,

@@ -64,6 +64,10 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 						console.log(`Failed to fetch capabilities for sessionId ${sessionId}: ${error.message}`);
 					}
 				}
+
+				if (capsBuildId && capsBuildId !== '') {
+					process.env.SMARTUI_BUILD_ID = capsBuildId;
+				}
 			}
 
 			ctx.testType = testType;

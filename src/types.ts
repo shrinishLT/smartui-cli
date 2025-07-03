@@ -35,6 +35,7 @@ export interface Context {
         skipBuildCreation?: boolean;
         tunnel: tunnelConfig | undefined;
         userAgent?: string;
+        requestHeaders?: Array<Record<string, string>>;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -61,7 +62,8 @@ export interface Context {
         fetchResults?: boolean,
         fetchResultsFileName?: string,
         baselineBranch?: string,
-        baselineBuild?: string
+        baselineBuild?: string,
+        githubURL?: string
     }
     cliVersion: string;
     totalSnapshots: number;

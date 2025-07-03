@@ -19,6 +19,9 @@ export async function prepareSnapshot(snapshot: Snapshot, ctx: Context): Promise
     if (ctx.config.basicAuthorization) {
         processedOptions.basicAuthorization = ctx.config.basicAuthorization;
     }
+    if (ctx.config.requestHeaders && Array.isArray(ctx.config.requestHeaders)) {
+        processedOptions.requestHeaders = ctx.config.requestHeaders
+    }
     ctx.config.allowedHostnames.push(new URL(snapshot.url).hostname);
     processedOptions.allowedHostnames = ctx.config.allowedHostnames;
     processedOptions.skipCapturedCookies = ctx.env.SMARTUI_DO_NOT_USE_CAPTURED_COOKIES;
@@ -181,6 +184,9 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
       };
 
     let processedOptions: Record<string, any> = {};
+    if (ctx.config.requestHeaders && Array.isArray(ctx.config.requestHeaders)) {
+        processedOptions.requestHeaders = ctx.config.requestHeaders
+    }
 
     let globalViewport = ""
     let globalBrowser = constants.CHROME
@@ -265,6 +271,13 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                 ctx.log.debug(`Adding basic authorization to the headers for root url`);
                 let token = Buffer.from(`${ctx.config.basicAuthorization.username}:${ctx.config.basicAuthorization.password}`).toString('base64');
                 requestOptions.headers.Authorization = `Basic ${token}`;
+            }
+            if (ctx.config.requestHeaders && Array.isArray(ctx.config.requestHeaders)) {
+                ctx.config.requestHeaders.forEach((headerObj) => {
+                    Object.entries(headerObj).forEach(([key, value]) => {
+                        requestOptions.headers[key] = value;
+                    });
+                });
             }
 
             // get response
