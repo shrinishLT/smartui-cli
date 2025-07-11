@@ -1,4 +1,5 @@
 import { createLogger, format, transports, log } from 'winston'
+import stringify  from 'json-stringify-safe'
 import constants from './constants.js'
 import { Env } from '../types.js'
 import getEnv from './env.js'
@@ -26,7 +27,7 @@ const logger = createLogger({
 		format.timestamp(),
 		format.printf(info => {
 			let contextString = Object.values(logContext).join(' | ');
-			let message = (typeof info.message === 'object') ? JSON.stringify(info.message).trim() : info.message.trim();
+			let message = (typeof info.message === 'object') ? stringify(info.message) : info.message.trim();
 			switch (info.level) {
 				case 'warn':
 					message = chalk.yellow(message);
