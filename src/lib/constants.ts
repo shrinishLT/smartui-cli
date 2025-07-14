@@ -360,7 +360,7 @@ export default {
 
     FIGMA_API: 'https://api.figma.com/v1/',
     DEFAULT_FIGMA_CONFIG: {
-        "depth": 2,
+        "depth": 1,
         "figma_config": [
             {
                 "figma_file_token": "token_for_first_figma_file",
@@ -381,7 +381,7 @@ export default {
             ]
         },
         figma: {
-            "depth": 2,
+            "depth": 1,
             "configs": [
                 {
                     "figma_file_token": "<token>",
@@ -408,7 +408,7 @@ export default {
             }
         ],
         figma: {
-            "depth": 2,
+            "depth": 1,
             "configs": [
                 {
                     "figma_file_token": "<token>",
