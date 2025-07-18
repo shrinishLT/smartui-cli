@@ -36,6 +36,7 @@ export interface Context {
         tunnel: tunnelConfig | undefined;
         userAgent?: string;
         requestHeaders?: Array<Record<string, string>>;
+        allowDuplicateSnapshotNames?: boolean;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
