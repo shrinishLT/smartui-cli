@@ -512,8 +512,8 @@ const FigmaDesignConfigSchema: JSONSchemaType<FigmaDesignConfig> = {
     properties: {
         depth: {
             type: "integer",
-            minimum: 2,
-            errorMessage: "Depth must be an integer and greater than 1"
+            minimum: 1,
+            errorMessage: "Depth must be an integer and greater than 0"
         },
         figma_config: {
             type: "array",
@@ -586,8 +586,8 @@ const FigmaWebConfigSchema: JSONSchemaType<Object> = {
             "properties": {
                 depth: {
                     type: "integer",
-                    minimum: 2,
-                    errorMessage: "Depth must be an integer and greater than 1"
+                    minimum: 1,
+                    errorMessage: "Depth must be an integer and greater than 0"
                 },
                 "configs": {
                     "type": "array",
@@ -702,8 +702,8 @@ const FigmaAppConfigSchema: JSONSchemaType<Object> = {
             "properties": {
                 depth: {
                     type: "integer",
-                    minimum: 2,
-                    errorMessage: "Depth must be an integer and greater than 1"
+                    minimum: 1,
+                    errorMessage: "Depth must be an integer and greater than 0"
                 },
                 "configs": {
                     "type": "array",
