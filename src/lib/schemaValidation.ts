@@ -258,6 +258,10 @@ const ConfigSchema = {
             errorMessage: {
                 uniqueItems: "Invalid config; duplicates in requestHeaders"
             }
+        },
+        allowDuplicateSnapshotNames: {
+            type: "boolean",
+            errorMessage: "Invalid config; allowDuplicateSnapshotNames must be true/false"
         }
     },
     anyOf: [

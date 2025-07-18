@@ -23,6 +23,7 @@ export default (options: Record<string, string>): Context => {
     let fetchResultObj: boolean;
     let fetchResultsFileObj: string;
     let buildNameObj: string;
+    let allowDuplicateSnapshotNames: boolean = false;
     try {
         if (options.config) {
             config = JSON.parse(fs.readFileSync(options.config, 'utf-8'));
@@ -85,10 +86,13 @@ export default (options: Record<string, string>): Context => {
         }
     }
     if (config.basicAuthorization) {
-        basicAuthObj = config.basicAuthorization
+        basicAuthObj = config.basicAuthorization;
     }
     if (config.tunnel) {
-        tunnelObj = config.tunnel
+        tunnelObj = config.tunnel;
+    }
+    if (config.allowDuplicateSnapshotNames) {
+        allowDuplicateSnapshotNames = true;
     }
 
     return {
@@ -114,7 +118,8 @@ export default (options: Record<string, string>): Context => {
             skipBuildCreation: config.skipBuildCreation ?? false,
             tunnel: tunnelObj,
             userAgent: config.userAgent || '',
-            requestHeaders: config.requestHeaders || {}
+            requestHeaders: config.requestHeaders || {},
+            allowDuplicateSnapshotNames: allowDuplicateSnapshotNames,
         },
         uploadFilePath: '',
         webStaticConfig: [],
