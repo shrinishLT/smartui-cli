@@ -19,7 +19,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                             name: resp.data.buildName,
                             url: resp.data.buildURL,
                             baseline: resp.data.baseline,
-                            useKafkaFlow: resp.data.useKafgkaFlow || false,
+                            useKafkaFlow: resp.data.useKafkaFlow || false,
                         }
                         process.env.SMARTUI_BUILD_ID = resp.data.buildId;
                         process.env.SMARTUI_BUILD_NAME = resp.data.buildName;
