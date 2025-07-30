@@ -55,6 +55,7 @@ export interface Context {
         force?: boolean,
         markBaseline?: boolean,
         buildName?: string,
+        scheduled?: string,
         port?: number,
         ignoreResolutions?: boolean,
         fileExtension?: Array<string>,
