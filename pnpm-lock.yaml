@@ -2238,3 +2238,5 @@ snapshots:
   wrappy@1.0.2: {}
 
   yallist@4.0.0: {}
+
+  yaml@2.3.4: {}
