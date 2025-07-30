@@ -12,15 +12,14 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
 
             try {
                 if (ctx.authenticatedInitially && !ctx.config.skipBuildCreation) {
-                    let resp = await ctx.client.createBuild(ctx.git, ctx.config, ctx.log, ctx.build.name, ctx.isStartExec || false, ctx.env.SMART_GIT, ctx.options.markBaseline || false, ctx.options.baselineBuild || '', ctx.options.scheduled);
+                    let resp = await ctx.client.createBuild(ctx.git, ctx.config, ctx.log, ctx.build.name, ctx.isStartExec, ctx.env.SMART_GIT, ctx.options.markBaseline, ctx.options.baselineBuild, ctx.options.scheduled);
                     if (resp && resp.data && resp.data.buildId) {
                         ctx.build = {
                             id: resp.data.buildId,
                             name: resp.data.buildName,
                             url: resp.data.buildURL,
                             baseline: resp.data.baseline,
-                            useKafkaFlow: resp.data.useKafkaFlow || false,
-                            hasDiscoveryError: false
+                            useKafkaFlow: resp.data.useKafgkaFlow || false,
                         }
                         process.env.SMARTUI_BUILD_ID = resp.data.buildId;
                         process.env.SMARTUI_BUILD_NAME = resp.data.buildName;
