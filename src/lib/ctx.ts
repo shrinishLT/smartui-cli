@@ -147,6 +147,7 @@ export default (options: Record<string, string>): Context => {
             force: options.force ? true : false,
             markBaseline: options.markBaseline ? true : false,
             buildName: options.buildName || '',
+            scheduled: options.scheduled || '',
             port: port,
             ignoreResolutions: resolutionOff,
             fileExtension: extensionFiles,
