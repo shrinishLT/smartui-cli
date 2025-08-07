@@ -775,8 +775,7 @@ export const validateConfigForScheduled = (config: any) => {
         
         errors = errors.filter(error => {
             const message = error.message || '';
-            return !message.includes('max unique viewports allowed - 5') && 
-                   !message.includes('max mobile devices allowed - 20');
+            return !message.includes('max unique viewports allowed - 5')
         });
         
         if (config.web && config.web.viewports && Array.isArray(config.web.viewports)) {
@@ -789,18 +788,7 @@ export const validateConfigForScheduled = (config: any) => {
                 } as any);
             }
         }
-        
-        if (config.mobile && config.mobile.devices && Array.isArray(config.mobile.devices)) {
-            if (config.mobile.devices.length > 205) {
-                errors.push({
-                    message: "Invalid config; max unique devices allowed - 205 (scheduled build)",
-                    keyword: "maxItems",
-                    instancePath: "/mobile/devices",
-                    schemaPath: "#/properties/mobile/properties/devices/maxItems"
-                } as any);
-            }
-        }
-        
+    
         // If there are any errors remaining, set them and return false
         if (errors.length > 0) {
             validateConfigForScheduled.errors = errors;
