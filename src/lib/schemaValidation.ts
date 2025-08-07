@@ -764,3 +764,40 @@ export const validateSnapshot = ajv.compile(SnapshotSchema);
 export const validateFigmaDesignConfig = ajv.compile(FigmaDesignConfigSchema);
 export const validateWebFigmaConfig = ajv.compile(FigmaWebConfigSchema);
 export const validateAppFigmaConfig = ajv.compile(FigmaAppConfigSchema);
+
+export const validateConfigForScheduled = (config: any) => {
+    validateConfigForScheduled.errors = null;
+    
+    
+    if (!validateConfig(config)) {
+        
+        let errors = validateConfig.errors || [];
+        
+        errors = errors.filter(error => {
+            const message = error.message || '';
+            return !message.includes('max unique viewports allowed - 5')
+        });
+        
+        if (config.web && config.web.viewports && Array.isArray(config.web.viewports)) {
+            if (config.web.viewports.length > 8) {
+                errors.push({
+                    message: "Invalid config; max unique viewports allowed - 8 (scheduled build)",
+                    keyword: "maxItems",
+                    instancePath: "/web/viewports",
+                    schemaPath: "#/properties/web/properties/viewports/maxItems"
+                } as any);
+            }
+        }
+    
+        // If there are any errors remaining, set them and return false
+        if (errors.length > 0) {
+            validateConfigForScheduled.errors = errors;
+            return false;
+        }
+    }
+    
+    return true;
+};
+
+// Initialize the errors property
+validateConfigForScheduled.errors = null;
