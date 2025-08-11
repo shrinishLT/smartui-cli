@@ -1,7 +1,7 @@
 import { Context, Env, WebConfig, MobileConfig, basicAuth, tunnelConfig } from '../types.js'
 import constants from './constants.js'
 import { version } from '../../package.json'
-import { validateConfig } from './schemaValidation.js'
+import { validateConfig, validateConfigForScheduled } from './schemaValidation.js'
 import logger from './logger.js'
 import getEnv from './env.js'
 import httpClient from './httpClient.js'
@@ -36,9 +36,11 @@ export default (options: Record<string, string>): Context => {
                 delete config.web.resolutions;
             }
 
+            let validateConfigFn = options.scheduled ? validateConfigForScheduled : validateConfig;
+
             // validate config
-            if (!validateConfig(config)) {
-                throw new Error(validateConfig.errors[0].message);
+            if (!validateConfigFn(config)) {
+                throw new Error(validateConfigFn.errors[0].message);
             }
         } else {
             logger.info("## No config file provided. Using default config.");

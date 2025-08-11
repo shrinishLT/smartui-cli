@@ -20,6 +20,7 @@ command
     .option('-F, --force', 'forcefully apply the specified parallel instances per browser')
     .option('--fetch-results [filename]', 'Fetch results and optionally specify an output file, e.g., <filename>.json')
     .option('--buildName <string>', 'Specify the build name')
+    .option('--scheduled <string>', 'Specify the schedule ID')
     .option('--userName <string>', 'Specify the LT username')
     .option('--accessKey <string>', 'Specify the LT accesskey')
     .action(async function(file, _, command) {
