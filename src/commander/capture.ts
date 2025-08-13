@@ -90,7 +90,6 @@ command
             await tasks.run(ctx);
         } catch (error) {
             console.log('\nRefer docs: https://www.lambdatest.com/support/docs/smart-visual-regression-testing/');
-            ctx.log.error(error);
             process.exitCode = 1;
             throw new Error();
         }
