@@ -73,7 +73,7 @@ export default (options: Record<string, string>): Context => {
         }
     } catch (error: any) {
         console.log(`[smartui] Error: ${error.message}`);
-        process.exit();
+        process.exit(1);
     }
 
     if (config.web) {
