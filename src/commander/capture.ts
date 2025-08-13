@@ -46,11 +46,9 @@ command
                         ctx.log.warn(`Additional property "${error.params.additionalProperty}" is not allowed.`)
                     } else {
                         const validationError = error.message;
-                        process.exit(1);
                         throw new Error(validationError || 'Invalid Web Static config found in file : ' + file);
                     }
                 });
-                process.exit(1);
                 throw new Error(validateWebStaticConfig.errors[0]?.message);
             } 
 
