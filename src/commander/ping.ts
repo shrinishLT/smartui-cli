@@ -34,7 +34,8 @@ command
                 console.error(chalk.red('Error: SmartUI server did not respond in 15 seconds'));
             } else {
                 console.error(chalk.red('SmartUI server is not running'));
-                console.error(chalk.red(`Error: ${error.message}`));            
+                console.error(chalk.red(`Error: ${error?.code}`));  
+                console.error(error);            
             }
         }
     });

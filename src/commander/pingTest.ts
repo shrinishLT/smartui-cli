@@ -37,6 +37,7 @@ function makeHttpRequest(url: string, timeout: number): Promise<{ status: number
         });
         
         req.on('error', (error) => {
+            console.log(error)
             reject(error);
         });
         
@@ -65,6 +66,8 @@ command
             // Send GET request to the /ping endpoint
             const response = await makeHttpRequest(`${serverAddress}/ping`, 15000);
 
+            console.log("hello : "+ response)
+
             // Log the response from the server
             if (response.status === 200) {
                 console.log(chalk.green('SmartUI Server is running'));
@@ -78,6 +81,8 @@ command
                 console.error(chalk.red('Error: SmartUI server did not respond in 15 seconds'));
             } else {
                 console.error(chalk.red('SmartUI server is not running'));
+                console.error(chalk.red(`Error: ${error?.code}`));  
+                console.error(error);
             }
         }
     });
