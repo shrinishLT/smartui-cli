@@ -37,6 +37,7 @@ function makeHttpRequest(url: string, timeout: number): Promise<{ status: number
         });
         
         req.on('error', (error) => {
+            console.error(error)
             reject(error);
         });
         
@@ -78,6 +79,8 @@ command
                 console.error(chalk.red('Error: SmartUI server did not respond in 15 seconds'));
             } else {
                 console.error(chalk.red('SmartUI server is not running'));
+                console.error(chalk.red(`Error: ${error?.code}`));  
+                console.error(error);
             }
         }
     });
