@@ -9,6 +9,7 @@ import startServer from './server.js';
 import stopServer from './stopServer.js'
 import ping from './ping.js'
 import merge from './merge.js'
+import pingTest from './pingTest.js'
 
 const program = new Command();
 
@@ -36,6 +37,7 @@ program
     .addCommand(configAppFigma)
     .addCommand(uploadWebFigmaCommand)
     .addCommand(uploadAppFigmaCommand)
+    .addCommand(pingTest)
 
 
 
