@@ -1,7 +1,7 @@
 import { Context, Env, WebConfig, MobileConfig, basicAuth, tunnelConfig } from '../types.js'
 import constants from './constants.js'
 import { version } from '../../package.json'
-import { validateConfig } from './schemaValidation.js'
+import { validateConfig, validateConfigForScheduled } from './schemaValidation.js'
 import logger from './logger.js'
 import getEnv from './env.js'
 import httpClient from './httpClient.js'
@@ -23,6 +23,7 @@ export default (options: Record<string, string>): Context => {
     let fetchResultObj: boolean;
     let fetchResultsFileObj: string;
     let buildNameObj: string;
+    let allowDuplicateSnapshotNames: boolean = false;
     try {
         if (options.config) {
             config = JSON.parse(fs.readFileSync(options.config, 'utf-8'));
@@ -35,9 +36,11 @@ export default (options: Record<string, string>): Context => {
                 delete config.web.resolutions;
             }
 
+            let validateConfigFn = options.scheduled ? validateConfigForScheduled : validateConfig;
+
             // validate config
-            if (!validateConfig(config)) {
-                throw new Error(validateConfig.errors[0].message);
+            if (!validateConfigFn(config)) {
+                throw new Error(validateConfigFn.errors[0].message);
             }
         } else {
             logger.info("## No config file provided. Using default config.");
@@ -70,7 +73,7 @@ export default (options: Record<string, string>): Context => {
         }
     } catch (error: any) {
         console.log(`[smartui] Error: ${error.message}`);
-        process.exit();
+        process.exit(1);
     }
 
     if (config.web) {
@@ -85,10 +88,13 @@ export default (options: Record<string, string>): Context => {
         }
     }
     if (config.basicAuthorization) {
-        basicAuthObj = config.basicAuthorization
+        basicAuthObj = config.basicAuthorization;
     }
     if (config.tunnel) {
-        tunnelObj = config.tunnel
+        tunnelObj = config.tunnel;
+    }
+    if (config.allowDuplicateSnapshotNames) {
+        allowDuplicateSnapshotNames = true;
     }
 
     return {
@@ -114,7 +120,8 @@ export default (options: Record<string, string>): Context => {
             skipBuildCreation: config.skipBuildCreation ?? false,
             tunnel: tunnelObj,
             userAgent: config.userAgent || '',
-            requestHeaders: config.requestHeaders || {}
+            requestHeaders: config.requestHeaders || {},
+            allowDuplicateSnapshotNames: allowDuplicateSnapshotNames,
         },
         uploadFilePath: '',
         webStaticConfig: [],
@@ -142,6 +149,7 @@ export default (options: Record<string, string>): Context => {
             force: options.force ? true : false,
             markBaseline: options.markBaseline ? true : false,
             buildName: options.buildName || '',
+            scheduled: options.scheduled || '',
             port: port,
             ignoreResolutions: resolutionOff,
             fileExtension: extensionFiles,
