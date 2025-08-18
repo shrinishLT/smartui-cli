@@ -37,7 +37,7 @@ function makeHttpRequest(url: string, timeout: number): Promise<{ status: number
         });
         
         req.on('error', (error) => {
-            console.log(error)
+            console.error(error)
             reject(error);
         });
         
@@ -65,8 +65,6 @@ command
 
             // Send GET request to the /ping endpoint
             const response = await makeHttpRequest(`${serverAddress}/ping`, 15000);
-
-            console.log("hello : "+ response)
 
             // Log the response from the server
             if (response.status === 200) {
