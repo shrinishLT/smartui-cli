@@ -3,7 +3,7 @@ import { Snapshot, Context } from "../types.js";
 import constants from "./constants.js";
 import processSnapshot, {prepareSnapshot} from "./processSnapshot.js"
 import { v4 as uuidv4 } from 'uuid';
-import { startPolling, stopTunnelHelper } from "./utils.js";
+import { startPolling, stopTunnelHelper, calculateVariantCountFromSnapshot } from "./utils.js";
 
 export default class Queue {
     private snapshots: Array<Snapshot> = [];
@@ -127,6 +127,8 @@ export default class Queue {
         }
         return drop;
     }
+
+    
 
     private filterVariants(snapshot: Snapshot, config: any): boolean {
         let allVariantsDropped = true;
@@ -272,6 +274,15 @@ export default class Queue {
                 this.processingSnapshot = snapshot?.name;
                 let drop = false;
 
+                if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap) {
+                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, {
+                        snapshotName: snapshot.name,
+                        buildId: this.ctx.build?.id || '',
+                        snapshotUuid: '' 
+                    });
+                    this.ctx.log.debug(`Filled context mapping for contextId ${snapshot.options.contextId} with snapshot details: ${JSON.stringify(this.ctx.contextToSnapshotMap.get(snapshot.options.contextId))}`);
+                }
+
                 if (this.ctx.isStartExec && !this.ctx.config.tunnel) {
                     this.ctx.log.info(`Processing Snapshot: ${snapshot?.name}`);
                 }
@@ -331,6 +342,7 @@ export default class Queue {
 
 
                     if (useCapsBuildId) {
+                        this.ctx.log.info(`Using cached buildId: ${capsBuildId}`);
                         if (useKafkaFlowCaps) {
                             const snapshotUuid = uuidv4();
                             const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUploadCaps(this.ctx, processedSnapshot.name, snapshotUuid, capsBuildId, capsProjectToken);
@@ -372,6 +384,16 @@ export default class Queue {
                         }
                         if (this.ctx.build && this.ctx.build.useKafkaFlow) {
                             const snapshotUuid = uuidv4();
+                            
+                            if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap?.has(snapshot.options.contextId)) {
+                                const existingMapping = this.ctx.contextToSnapshotMap.get(snapshot.options.contextId);
+                                if (existingMapping) {
+                                    existingMapping.snapshotUuid = snapshotUuid;
+                                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, existingMapping);
+                                    this.ctx.log.debug(`Updated context mapping for contextId ${snapshot.options.contextId} with actual snapshotUuid: ${snapshotUuid}`);
+                                }
+                            }
+                            
                             const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUpload(this.ctx, processedSnapshot.name, snapshotUuid);
                             const uploadUrl = presignedResponse.data.url;
 
@@ -391,9 +413,11 @@ export default class Queue {
                                 }
                                 this.processNext();
                             } else {
-                                await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors);
+                                this.ctx.log.info(`Processing snapshot ${processedSnapshot.name} with variant count ${calculateVariantCountFromSnapshot(processedSnapshot, this.ctx.config)}`);
+                                await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors,calculateVariantCountFromSnapshot(processedSnapshot, this.ctx.config),snapshot?.options?.sync);
                             }
                         } else {
+                            this.ctx.log.info(`Uploading snapshot to S3`);
                             await this.ctx.client.uploadSnapshot(this.ctx, processedSnapshot,  discoveryErrors);
                         }
                         this.ctx.totalSnapshots++;
@@ -436,5 +460,67 @@ export default class Queue {
 
     isEmpty(): boolean {
         return this.snapshots && this.snapshots.length ? false : true;
+    }
+
+    /**
+     * Calculate the number of variants for a snapshot based on the configuration
+     * @param snapshot - The snapshot object
+     * @param config - The configuration object containing web and mobile settings
+     * @returns The total number of variants that would be generated
+     */
+    getVariantCount(snapshot: Snapshot, config: any): number {
+        let variantCount = 0;
+
+        // Calculate web variants
+        if (config.web) {
+            const browsers = config.web.browsers || [];
+            const viewports = config.web.viewports || [];
+            variantCount += browsers.length * viewports.length;
+        }
+
+        // Calculate mobile variants
+        if (config.mobile) {
+            const devices = config.mobile.devices || [];
+            variantCount += devices.length;
+        }
+
+        return variantCount;
+    }
+
+    /**
+     * Calculate the number of variants for a snapshot based on snapshot-specific options
+     * @param snapshot - The snapshot object with options
+     * @returns The total number of variants that would be generated
+     */
+    getVariantCountFromSnapshotOptions(snapshot: Snapshot): number {
+        let variantCount = 0;
+
+        // Check snapshot-specific web options
+        if (snapshot.options?.web) {
+            const browsers = snapshot.options.web.browsers || [];
+            const viewports = snapshot.options.web.viewports || [];
+            variantCount += browsers.length * viewports.length;
+        }
+
+        // Check snapshot-specific mobile options
+        if (snapshot.options?.mobile) {
+            const devices = snapshot.options.mobile.devices || [];
+            variantCount += devices.length;
+        }
+
+        // Fallback to global config if no snapshot-specific options
+        if (variantCount === 0) {
+            variantCount = this.getVariantCount(snapshot, this.ctx.config);
+        }
+
+        return variantCount;
+    }
+
+    /**
+     * Get the current number of variants for the last processed snapshot
+     * @returns The number of variants in the current variants array
+     */
+    getCurrentVariantCount(): number {
+        return this.variants.length;
     }
 }

@@ -41,6 +41,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			// Fetch sessionId from snapshot options if present
 			const sessionId = snapshot?.options?.sessionId;
 			let capsBuildId = ''
+			const contextId = snapshot?.options?.contextId;
 
 			if (sessionId) {
 				// Check if sessionId exists in the map
@@ -71,6 +72,21 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			}
 
 			ctx.testType = testType;
+			
+			if (contextId && !ctx.contextToSnapshotMap) {
+				ctx.contextToSnapshotMap = new Map();
+				ctx.log.info(`Initialized empty context mapping map for contextId: ${contextId}`);
+			}
+			
+			if (contextId && ctx.contextToSnapshotMap) {
+				ctx.contextToSnapshotMap.set(contextId, {
+					snapshotName: '',
+					buildId: '',
+					snapshotUuid: ''
+				});
+				ctx.log.debug(`Added empty default values for contextId: ${contextId}`);
+			}
+			
 			ctx.snapshotQueue?.enqueue(snapshot);
 			ctx.isSnapshotCaptured = true;
 			replyCode = 200;
@@ -130,7 +146,143 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 		reply.code(200).send({ status: 'Server is running', version: ctx.cliVersion });
 	});
 
-	
+	// Get snapshot status
+	server.get('/snapshot/status', opts, async (request, reply) => {
+		let replyCode: number;
+		let replyBody: Record<string, any>;
+
+		try {
+			const { contextId } = request.query as { contextId: string };
+			ctx.log.debug("CONTEXT ID   : ", contextId);
+			if (!contextId) {
+				throw new Error('contextId is a required parameter');
+			}
+
+			// Check if we have stored snapshot details for this contextId
+			if (ctx.contextToSnapshotMap?.has(contextId)) {
+				const snapshotDetails = ctx.contextToSnapshotMap.get(contextId);
+				ctx.log.debug("SNAPSHOT DETAILS   : ", snapshotDetails);
+				
+				// Wait until all required fields are available with polling
+				let attempts = 0;
+				const maxAttempts = 60; // 5 minutes max (60 * 5 seconds)
+				
+				while (!snapshotDetails?.buildId || !snapshotDetails?.snapshotName || !snapshotDetails?.snapshotUuid) {
+					attempts++;
+					if (attempts >= maxAttempts) {
+						replyCode = 408;
+						replyBody = { 
+							error: { 
+								message: 'Timeout waiting for snapshot details to be complete',
+								data: {
+									snapshotName: snapshotDetails?.snapshotName || 'pending',
+									buildId: snapshotDetails?.buildId || 'pending',
+									snapshotUuid: snapshotDetails?.snapshotUuid || 'pending'
+								}
+							}
+						};
+						return reply.code(replyCode).send(replyBody);
+					}
+					
+					// Wait 5 seconds before next check
+					await new Promise(resolve => setTimeout(resolve, 5000));
+					
+					// Refresh snapshot details from the map
+					const updatedSnapshotDetails = ctx.contextToSnapshotMap.get(contextId);
+					if (updatedSnapshotDetails && snapshotDetails) {
+						Object.assign(snapshotDetails, updatedSnapshotDetails);
+					}
+					
+					ctx.log.debug(`Attempt ${attempts}: Waiting for snapshot details to be complete...`);
+				}
+				
+				ctx.log.debug("All snapshot details are now available:", snapshotDetails);
+
+				// All fields are available, now poll external API until it returns 200
+				// Poll external API until it returns 200
+				let externalApiAttempts = 0;
+				const maxExternalApiAttempts = 120; // 10 minutes max (120 * 5 seconds)
+				
+				while (true) {
+					externalApiAttempts++;
+					if (externalApiAttempts >= maxExternalApiAttempts) {
+						replyCode = 408;
+						replyBody = { 
+							error: { 
+								message: 'Timeout waiting for external API to return 200',
+								data: {
+									snapshotName: snapshotDetails.snapshotName,
+									buildId: snapshotDetails.buildId,
+									snapshotUuid: snapshotDetails.snapshotUuid
+								}
+							}
+						};
+						return reply.code(replyCode).send(replyBody);
+					}
+					
+					try {
+						// Make the external API call using the httpClient with URL params
+						const externalResponse = await ctx.client.getSnapshotStatus(
+							ctx.log, 
+							snapshotDetails.buildId,
+							snapshotDetails.snapshotName,
+							snapshotDetails.snapshotUuid
+						);
+						
+						if (externalResponse.statusCode === 200) {
+							// External API returned 200, success! Return the response as-is
+							replyCode = 200;
+							replyBody = externalResponse.data || { 
+								status: 'success',
+								message: 'External API returned 200',
+								data: {
+									snapshotName: snapshotDetails.snapshotName,
+									buildId: snapshotDetails.buildId,
+									snapshotUuid: snapshotDetails.snapshotUuid
+								}
+							};
+							return reply.code(replyCode).send(replyBody);
+						} else if (externalResponse.statusCode === 202) {
+							// External API returned 202, keep polling
+							ctx.log.debug(`External API attempt ${externalApiAttempts}: Still processing (202), waiting 5 seconds...`);
+							await new Promise(resolve => setTimeout(resolve, 5000));
+						} else {
+							// Unexpected response from external API
+							ctx.log.debug(`Unexpected response from external API: ${JSON.stringify(externalResponse)}`);
+							replyCode = 500;
+							replyBody = { 
+								error: { 
+									message: `Unexpected response from external API: ${externalResponse.statusCode}`,
+									externalApiStatus: externalResponse.statusCode
+								}
+							};
+							return reply.code(replyCode).send(replyBody);
+						}
+					} catch (externalApiError: any) {
+						ctx.log.debug(`External API call failed: ${externalApiError.message}`);
+						replyCode = 500;
+						replyBody = { 
+							error: { 
+								message: `External API call failed: ${externalApiError.message}`
+							}
+						};
+						return reply.code(replyCode).send(replyBody);
+					}
+				}
+			} else {
+				// No snapshot found for this contextId
+				replyCode = 404;
+				replyBody = { error: { message: `No snapshot found for contextId: ${contextId}` } };
+			}
+		} catch (error: any) {
+			ctx.log.debug(`snapshot status failed; ${error}`);
+			replyCode = 500;
+			replyBody = { error: { message: error.message } };
+		}
+
+		return reply.code(replyCode).send(replyBody);
+	});
+
 
 	await server.listen({ port: ctx.options.port });
 	// store server's address for SDK

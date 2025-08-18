@@ -86,6 +86,7 @@ export interface Context {
     mergeBuildTargetId?: string;
     mergeByBranch?: boolean;
     mergeByBuild?: boolean;
+    contextToSnapshotMap?: Map<string, { snapshotName: string; buildId: string; snapshotUuid: string }>;
 }
 
 export interface Env {
@@ -146,6 +147,8 @@ export interface Snapshot {
         loadDomContent?: boolean;
         ignoreType?: string[],
         sessionId?: string
+        sync?: boolean;
+        contextId?: string;
     }
 }
 

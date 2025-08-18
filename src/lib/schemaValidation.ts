@@ -497,6 +497,14 @@ const SnapshotSchema: JSONSchemaType<Snapshot> = {
                 sessionId: {
                     type: "string",
                     errorMessage: "Invalid snapshot options; sessionId must be a string"
+                },
+                contextId: {
+                    type: "string",
+                    errorMessage: "Invalid snapshot options; contextId must be a string"
+                },
+                sync: {
+                    type: "boolean",
+                    errorMessage: "Invalid snapshot options; sync must be a boolean"
                 }
             },
             additionalProperties: false
