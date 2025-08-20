@@ -505,6 +505,10 @@ const SnapshotSchema: JSONSchemaType<Snapshot> = {
                 sync: {
                     type: "boolean",
                     errorMessage: "Invalid snapshot options; sync must be a boolean"
+                },
+                timeout: {
+                    type: "number",
+                    errorMessage: "Invalid snapshot options; timeout must be a number"
                 }
             },
             additionalProperties: false

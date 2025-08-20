@@ -163,27 +163,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				const snapshotDetails = ctx.contextToSnapshotMap.get(contextId);
 				ctx.log.debug("SNAPSHOT DETAILS   : ", snapshotDetails);
 				
-				// Wait until all required fields are available with polling
-				let attempts = 0;
-				const maxAttempts = 60; // 5 minutes max (60 * 5 seconds)
-				
 				while (!snapshotDetails?.buildId || !snapshotDetails?.snapshotName || !snapshotDetails?.snapshotUuid) {
-					attempts++;
-					if (attempts >= maxAttempts) {
-						replyCode = 408;
-						replyBody = { 
-							error: { 
-								message: 'Timeout waiting for snapshot details to be complete',
-								data: {
-									snapshotName: snapshotDetails?.snapshotName || 'pending',
-									buildId: snapshotDetails?.buildId || 'pending',
-									snapshotUuid: snapshotDetails?.snapshotUuid || 'pending'
-								}
-							}
-						};
-						return reply.code(replyCode).send(replyBody);
-					}
-					
 					// Wait 5 seconds before next check
 					await new Promise(resolve => setTimeout(resolve, 5000));
 					
@@ -192,34 +172,13 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 					if (updatedSnapshotDetails && snapshotDetails) {
 						Object.assign(snapshotDetails, updatedSnapshotDetails);
 					}
-					
-					ctx.log.debug(`Attempt ${attempts}: Waiting for snapshot details to be complete...`);
 				}
 				
 				ctx.log.debug("All snapshot details are now available:", snapshotDetails);
 
-				// All fields are available, now poll external API until it returns 200
 				// Poll external API until it returns 200
-				let externalApiAttempts = 0;
-				const maxExternalApiAttempts = 120; // 10 minutes max (120 * 5 seconds)
 				
-				while (true) {
-					externalApiAttempts++;
-					if (externalApiAttempts >= maxExternalApiAttempts) {
-						replyCode = 408;
-						replyBody = { 
-							error: { 
-								message: 'Timeout waiting for external API to return 200',
-								data: {
-									snapshotName: snapshotDetails.snapshotName,
-									buildId: snapshotDetails.buildId,
-									snapshotUuid: snapshotDetails.snapshotUuid
-								}
-							}
-						};
-						return reply.code(replyCode).send(replyBody);
-					}
-					
+				while (true) {					
 					try {
 						// Make the external API call using the httpClient with URL params
 						const externalResponse = await ctx.client.getSnapshotStatus(
@@ -244,7 +203,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 							return reply.code(replyCode).send(replyBody);
 						} else if (externalResponse.statusCode === 202) {
 							// External API returned 202, keep polling
-							ctx.log.debug(`External API attempt ${externalApiAttempts}: Still processing (202), waiting 5 seconds...`);
+							ctx.log.debug(`External API attempt: Still processing (202), waiting 5 seconds...`);
 							await new Promise(resolve => setTimeout(resolve, 5000));
 						} else {
 							// Unexpected response from external API
