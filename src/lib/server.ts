@@ -75,7 +75,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			
 			if (contextId && !ctx.contextToSnapshotMap) {
 				ctx.contextToSnapshotMap = new Map();
-				ctx.log.info(`Initialized empty context mapping map for contextId: ${contextId}`);
+				ctx.log.debug(`Initialized empty context mapping map for contextId: ${contextId}`);
 			}
 			
 			if (contextId && ctx.contextToSnapshotMap) {
