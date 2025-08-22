@@ -28,6 +28,16 @@ export default class Queue {
         }
     }
 
+    enqueueFront(item: Snapshot): void {
+        this.snapshots.unshift(item);
+        if (!this.ctx.config.delayedUpload) {
+            if (!this.processing) {
+                this.processing = true;
+                this.processNext();
+            }
+        }
+    }
+
     startProcessingfunc(): void {
         if (!this.processing) {
             this.processing = true;
@@ -274,14 +284,6 @@ export default class Queue {
                 this.processingSnapshot = snapshot?.name;
                 let drop = false;
 
-                if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap) {
-                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, {
-                        snapshotName: snapshot.name,
-                        buildId: this.ctx.build?.id || '',
-                        snapshotUuid: '' 
-                    });
-                    this.ctx.log.debug(`Filled context mapping for contextId ${snapshot.options.contextId} with snapshot details: ${JSON.stringify(this.ctx.contextToSnapshotMap.get(snapshot.options.contextId))}`);
-                }
 
                 if (this.ctx.isStartExec && !this.ctx.config.tunnel) {
                     this.ctx.log.info(`Processing Snapshot: ${snapshot?.name}`);
@@ -383,15 +385,10 @@ export default class Queue {
                             }
                         }
                         if (this.ctx.build && this.ctx.build.useKafkaFlow) {
-                            const snapshotUuid = uuidv4();
+                            let snapshotUuid = uuidv4();
                             
                             if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap?.has(snapshot.options.contextId)) {
-                                const existingMapping = this.ctx.contextToSnapshotMap.get(snapshot.options.contextId);
-                                if (existingMapping) {
-                                    existingMapping.snapshotUuid = snapshotUuid;
-                                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, existingMapping);
-                                    this.ctx.log.debug(`Updated context mapping for contextId ${snapshot.options.contextId} with actual snapshotUuid: ${snapshotUuid}`);
-                                }
+                               snapshotUuid = snapshot.options.contextId;
                             }
                             
                             const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUpload(this.ctx, processedSnapshot.name, snapshotUuid);
@@ -414,6 +411,10 @@ export default class Queue {
                                 this.processNext();
                             } else {
                                 await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors,calculateVariantCountFromSnapshot(processedSnapshot, this.ctx.config),snapshot?.options?.sync);
+                                if(snapshot?.options?.contextId && this.ctx.contextToSnapshotMap?.has(snapshot.options.contextId)){
+                                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, 1);
+                                }
+                                this.ctx.log.debug(`ContextId: ${snapshot?.options?.contextId} status set to uploaded`);
                             }
                         } else {
                             this.ctx.log.info(`Uploading snapshot to S3`);
@@ -427,6 +428,9 @@ export default class Queue {
             } catch (error: any) {
                 this.ctx.log.debug(`snapshot failed; ${error}`);
                 this.processedSnapshots.push({ name: snapshot?.name, error: error.message });
+                if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap) {
+                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, 2);
+                }
             }
             // Close open browser contexts and pages
             if (this.ctx.browser) {

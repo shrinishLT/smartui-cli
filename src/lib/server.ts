@@ -79,15 +79,16 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			}
 			
 			if (contextId && ctx.contextToSnapshotMap) {
-				ctx.contextToSnapshotMap.set(contextId, {
-					snapshotName: '',
-					buildId: '',
-					snapshotUuid: ''
-				});
-				ctx.log.debug(`Added empty default values for contextId: ${contextId}`);
+				ctx.contextToSnapshotMap.set(contextId, 0);
+				ctx.log.debug(`Marking contextId as captured and added to queue: ${contextId}`);
+			}
+
+			if(contextId){
+				ctx.snapshotQueue?.enqueueFront(snapshot);
+			}else{
+				ctx.snapshotQueue?.enqueue(snapshot);	
 			}
 			
-			ctx.snapshotQueue?.enqueue(snapshot);
 			ctx.isSnapshotCaptured = true;
 			replyCode = 200;
 			replyBody = { data: { message: "success", warnings: [] }};
@@ -151,62 +152,57 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 		let replyCode: number;
 		let replyBody: Record<string, any>;
 
+
 		try {
-			const { contextId } = request.query as { contextId: string };
-			ctx.log.debug("CONTEXT ID   : ", contextId);
-			if (!contextId) {
-				throw new Error('contextId is a required parameter');
+			ctx.log.debug(`request.query : ${JSON.stringify(request.query)}`);
+			const { contextId, pollTimeout, snapshotName } = request.query as { contextId: string, pollTimeout: number, snapshotName: string };
+			if (!contextId || !snapshotName) {
+				throw new Error('contextId and snapshotName are required parameters');
 			}
 
-			// Check if we have stored snapshot details for this contextId
+			const timeoutDuration = pollTimeout*1000 || 30000; 
+
+			// Check if we have stored snapshot status for this contextId
 			if (ctx.contextToSnapshotMap?.has(contextId)) {
-				const snapshotDetails = ctx.contextToSnapshotMap.get(contextId);
-				ctx.log.debug("SNAPSHOT DETAILS   : ", snapshotDetails);
+				let contextStatus = ctx.contextToSnapshotMap.get(contextId);
 				
-				while (!snapshotDetails?.buildId || !snapshotDetails?.snapshotName || !snapshotDetails?.snapshotUuid) {
+				while (contextStatus==0) {
 					// Wait 5 seconds before next check
 					await new Promise(resolve => setTimeout(resolve, 5000));
 					
-					// Refresh snapshot details from the map
-					const updatedSnapshotDetails = ctx.contextToSnapshotMap.get(contextId);
-					if (updatedSnapshotDetails && snapshotDetails) {
-						Object.assign(snapshotDetails, updatedSnapshotDetails);
-					}
+					contextStatus = ctx.contextToSnapshotMap.get(contextId);
+				}
+
+				if(contextStatus==2){
+					throw new Error("Snapshot Failed");
 				}
 				
-				ctx.log.debug("All snapshot details are now available:", snapshotDetails);
+				ctx.log.debug("Snapshot uploaded successfully");
 
-				// Poll external API until it returns 200
-				
-				while (true) {					
+				// Poll external API until it returns 200 or timeout is reached
+				let lastExternalResponse: any = null; 
+				const startTime = Date.now(); 
+
+				while (true) {
 					try {
-						// Make the external API call using the httpClient with URL params
 						const externalResponse = await ctx.client.getSnapshotStatus(
 							ctx.log, 
-							snapshotDetails.buildId,
-							snapshotDetails.snapshotName,
-							snapshotDetails.snapshotUuid
+							ctx.build.id,
+							snapshotName,
+							contextId
 						);
 						
+						lastExternalResponse = externalResponse;
+
 						if (externalResponse.statusCode === 200) {
-							// External API returned 200, success! Return the response as-is
 							replyCode = 200;
-							replyBody = externalResponse.data || { 
-								status: 'success',
-								message: 'External API returned 200',
-								data: {
-									snapshotName: snapshotDetails.snapshotName,
-									buildId: snapshotDetails.buildId,
-									snapshotUuid: snapshotDetails.snapshotUuid
-								}
-							};
+							replyBody = externalResponse.data;
 							return reply.code(replyCode).send(replyBody);
 						} else if (externalResponse.statusCode === 202) {
-							// External API returned 202, keep polling
+							// External API returned 202, still processing
 							ctx.log.debug(`External API attempt: Still processing (202), waiting 5 seconds...`);
 							await new Promise(resolve => setTimeout(resolve, 5000));
 						} else {
-							// Unexpected response from external API
 							ctx.log.debug(`Unexpected response from external API: ${JSON.stringify(externalResponse)}`);
 							replyCode = 500;
 							replyBody = { 
@@ -217,6 +213,20 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 							};
 							return reply.code(replyCode).send(replyBody);
 						}
+
+						ctx.log.debug(`timeoutDuration: ${timeoutDuration}`);
+						ctx.log.debug(`Time passed: ${Date.now() - startTime}`);
+
+						if (Date.now() - startTime > timeoutDuration) {
+							replyCode = 202; 
+							replyBody = {
+								data: {
+									message: 'Request timed out-> Snapshot still processing'
+								} 
+							};
+							return reply.code(replyCode).send(replyBody);
+						}
+
 					} catch (externalApiError: any) {
 						ctx.log.debug(`External API call failed: ${externalApiError.message}`);
 						replyCode = 500;
@@ -232,14 +242,14 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				// No snapshot found for this contextId
 				replyCode = 404;
 				replyBody = { error: { message: `No snapshot found for contextId: ${contextId}` } };
+				return reply.code(replyCode).send(replyBody);
 			}
 		} catch (error: any) {
 			ctx.log.debug(`snapshot status failed; ${error}`);
 			replyCode = 500;
 			replyBody = { error: { message: error.message } };
+			return reply.code(replyCode).send(replyBody);
 		}
-
-		return reply.code(replyCode).send(replyBody);
 	});
 
 
