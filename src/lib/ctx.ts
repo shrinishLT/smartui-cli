@@ -24,6 +24,7 @@ export default (options: Record<string, string>): Context => {
     let fetchResultsFileObj: string;
     let buildNameObj: string;
     let allowDuplicateSnapshotNames: boolean = false;
+    let useLambdaInternal: boolean = false;
     try {
         if (options.config) {
             config = JSON.parse(fs.readFileSync(options.config, 'utf-8'));
@@ -96,6 +97,9 @@ export default (options: Record<string, string>): Context => {
     if (config.allowDuplicateSnapshotNames) {
         allowDuplicateSnapshotNames = true;
     }
+    if (config.useLambdaInternal) {
+        useLambdaInternal = true;
+    }
 
     return {
         env: env,
@@ -122,6 +126,7 @@ export default (options: Record<string, string>): Context => {
             userAgent: config.userAgent || '',
             requestHeaders: config.requestHeaders || {},
             allowDuplicateSnapshotNames: allowDuplicateSnapshotNames,
+            useLambdaInternal: useLambdaInternal,
         },
         uploadFilePath: '',
         webStaticConfig: [],
