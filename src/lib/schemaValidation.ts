@@ -262,6 +262,10 @@ const ConfigSchema = {
         allowDuplicateSnapshotNames: {
             type: "boolean",
             errorMessage: "Invalid config; allowDuplicateSnapshotNames must be true/false"
+        },
+        useLambdaInternal: {
+            type: "boolean",
+            errorMessage: "Invalid config; useLambdaInternal must be true/false"
         }
     },
     anyOf: [
