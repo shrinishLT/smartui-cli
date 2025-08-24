@@ -7,6 +7,7 @@ import { unlinkSync } from 'fs';
 import constants from '../lib/constants.js';
 import fs from 'fs';
 
+const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
         title: `Finalizing build`,
@@ -76,9 +77,15 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 await ctx.server?.close();
                 ctx.log.debug(`Closed server`);
                 if (ctx.isSnapshotCaptured) {
-                    ctx.log.debug(`Log file to be uploaded`)
-                    let resp = await ctx.client.getS3PreSignedURL(ctx);
-                    await ctx.client.uploadLogs(ctx, resp.data.url);
+                    let uploadCLILogsToS3 = ctx.config.useLambdaInternal || uploadDomToS3ViaEnv;
+                    if (!uploadCLILogsToS3) {
+                        ctx.log.debug(`Log file to be uploaded`)
+                        let resp = await ctx.client.getS3PreSignedURL(ctx);
+                        await ctx.client.uploadLogs(ctx, resp.data.url);
+                    } else {
+                        ctx.log.debug(`Log file to be uploaded via LSRS`)
+                        let resp = ctx.client.sendCliLogsToLSRS(ctx);
+                    }
                 }
             } catch (error: any) {
                 ctx.log.debug(error);
