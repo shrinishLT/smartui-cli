@@ -197,9 +197,8 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 							replyCode = 200;
 							replyBody = externalResponse.data;
 							return reply.code(replyCode).send(replyBody);
-						} else if (externalResponse.statusCode === 202) {
-							// External API returned 202, still processing
-							ctx.log.debug(`External API attempt: Still processing (202), waiting 5 seconds...`);
+						} else if (externalResponse.statusCode === 202 || externalResponse.statusCode === 404) {
+							ctx.log.debug(`External API attempt: Still processing, waiting 5 seconds...`);
 							await new Promise(resolve => setTimeout(resolve, 5000));
 						} else {
 							ctx.log.debug(`Unexpected response from external API: ${JSON.stringify(externalResponse)}`);
