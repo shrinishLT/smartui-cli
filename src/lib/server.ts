@@ -7,6 +7,7 @@ import { validateSnapshot } from './schemaValidation.js'
 import { pingIntervalId } from './utils.js';
 import { startPolling } from './utils.js';
 
+const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMessage, ServerResponse>> => {
 	
 	const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = fastify({
@@ -105,8 +106,16 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			if (ctx.server){
 				ctx.server.close();
 			}
-			let resp = await ctx.client.getS3PreSignedURL(ctx);
-            await ctx.client.uploadLogs(ctx, resp.data.url);
+
+			let uploadCLILogsToS3 = ctx?.config?.useLambdaInternal || uploadDomToS3ViaEnv;
+			if (!uploadCLILogsToS3) {
+				ctx.log.debug(`Log file to be uploaded`)
+				let resp = await ctx.client.getS3PreSignedURL(ctx);
+				await ctx.client.uploadLogs(ctx, resp.data.url);
+			} else {
+				ctx.log.debug(`Log file to be uploaded via LSRS`)
+				let resp = ctx.client.sendCliLogsToLSRS(ctx);
+			}
 
 			if (pingIntervalId !== null) {
 				clearInterval(pingIntervalId);
