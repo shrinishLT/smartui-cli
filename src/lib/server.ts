@@ -186,10 +186,9 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				while (true) {
 					try {
 						const externalResponse = await ctx.client.getSnapshotStatus(
-							ctx.log, 
-							ctx.build.id,
 							snapshotName,
-							contextId
+							contextId,
+							ctx
 						);
 						
 						lastExternalResponse = externalResponse;

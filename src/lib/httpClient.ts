@@ -580,13 +580,13 @@ export default class httpClient {
         }, ctx.log)
     }
 
-    getSnapshotStatus(log: Logger, buildId: string, snapshotName: string, snapshotUuid: string): Promise<Record<string, any>> {
+    getSnapshotStatus(snapshotName: string, snapshotUuid: string, ctx: Context): Promise<Record<string, any>> {
         return this.request({
-            url: `/snapshot/status?buildId=${buildId}&snapshotName=${snapshotName}&snapshotUUID=${snapshotUuid}`,
+            url: `/snapshot/status?buildId=${ctx.build.id}&snapshotName=${snapshotName}&snapshotUUID=${snapshotUuid}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             }
-        }, log);
+        }, ctx.log);
     }
 }
