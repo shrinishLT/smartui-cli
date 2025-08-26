@@ -20,6 +20,7 @@ command
     .option('-F, --force', 'forcefully apply the specified parallel instances per browser')
     .option('--fetch-results [filename]', 'Fetch results and optionally specify an output file, e.g., <filename>.json')
     .option('--buildName <string>', 'Specify the build name')
+    .option('--scheduled <string>', 'Specify the schedule ID')
     .option('--userName <string>', 'Specify the LT username')
     .option('--accessKey <string>', 'Specify the LT accesskey')
     .action(async function(file, _, command) {
@@ -38,7 +39,6 @@ command
         try {
             ctx.webStaticConfig = JSON.parse(fs.readFileSync(file, 'utf8'));
             if (!validateWebStaticConfig(ctx.webStaticConfig)){
-
                 ctx.log.debug(JSON.stringify(validateWebStaticConfig.errors, null, 2));
                 // Iterate and add warning for "additionalProperties"
                 validateWebStaticConfig.errors?.forEach(error => {
@@ -58,6 +58,7 @@ command
             }
         } catch (error: any) {
             ctx.log.error(`Invalid Web Static Config; ${error.message}`);
+            process.exitCode = 1;
             return;
         }
         //Print Config here in debug mode
@@ -88,6 +89,7 @@ command
         } catch (error) {
             console.log('\nRefer docs: https://www.lambdatest.com/support/docs/smart-visual-regression-testing/');
             process.exitCode = 1;
+            throw new Error();
         }
 
     })

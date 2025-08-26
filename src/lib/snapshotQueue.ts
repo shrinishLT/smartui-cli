@@ -5,6 +5,7 @@ import processSnapshot, {prepareSnapshot} from "./processSnapshot.js"
 import { v4 as uuidv4 } from 'uuid';
 import { startPolling, stopTunnelHelper, calculateVariantCountFromSnapshot } from "./utils.js";
 
+const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 export default class Queue {
     private snapshots: Array<Snapshot> = [];
     private processedSnapshots: Array<Record<string, any>> = [];
@@ -347,10 +348,16 @@ export default class Queue {
                         this.ctx.log.info(`Using cached buildId: ${capsBuildId}`);
                         if (useKafkaFlowCaps) {
                             const snapshotUuid = uuidv4();
-                            const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUploadCaps(this.ctx, processedSnapshot.name, snapshotUuid, capsBuildId, capsProjectToken);
-                            const uploadUrl = presignedResponse.data.url;
-
-                            await this.ctx.client.uploadSnapshotToS3Caps(this.ctx, uploadUrl, processedSnapshot, capsProjectToken)
+                            let uploadDomToS3 = this.ctx.config.useLambdaInternal || uploadDomToS3ViaEnv;
+                            if (!uploadDomToS3) {
+                                this.ctx.log.debug(`Uploading dom to S3 for snapshot using presigned URL for CAPS`);
+                                const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUploadCaps(this.ctx, processedSnapshot.name, snapshotUuid, capsBuildId, capsProjectToken);
+                                const uploadUrl = presignedResponse.data.url;
+                                await this.ctx.client.uploadSnapshotToS3Caps(this.ctx, uploadUrl, processedSnapshot, capsProjectToken)
+                            } else {
+                                this.ctx.log.debug(`Uploading dom to S3 for snapshot using LSRS`);
+                                await this.ctx.client.sendDomToLSRSForCaps(this.ctx, processedSnapshot, snapshotUuid, capsBuildId, capsProjectToken);
+                            }
                             await this.ctx.client.processSnapshotCaps(this.ctx, processedSnapshot, snapshotUuid, capsBuildId, capsProjectToken, discoveryErrors);
                         } else {
                             await this.ctx.client.uploadSnapshotForCaps(this.ctx, processedSnapshot, capsBuildId, capsProjectToken, discoveryErrors);
@@ -386,15 +393,22 @@ export default class Queue {
                         }
                         if (this.ctx.build && this.ctx.build.useKafkaFlow) {
                             let snapshotUuid = uuidv4();
-                            
+                            let snapshotUploadResponse
                             if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap?.has(snapshot.options.contextId)) {
-                               snapshotUuid = snapshot.options.contextId;
-                            }
-                            
-                            const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUpload(this.ctx, processedSnapshot.name, snapshotUuid);
-                            const uploadUrl = presignedResponse.data.url;
+                                snapshotUuid = snapshot.options.contextId;
+                             }
+                             let uploadDomToS3 = this.ctx.config.useLambdaInternal || uploadDomToS3ViaEnv;
+                             if (!uploadDomToS3) {
+                                this.ctx.log.debug(`Uploading dom to S3 for snapshot using presigned URL`);
+                                const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUpload(this.ctx, processedSnapshot.name, snapshotUuid);
+                                const uploadUrl = presignedResponse.data.url;
+                                snapshotUploadResponse = await this.ctx.client.uploadSnapshotToS3(this.ctx, uploadUrl, processedSnapshot);
+                             } else {
+                                this.ctx.log.debug(`Uploading dom to S3 for snapshot using LSRS`);
+                                snapshotUploadResponse = await this.ctx.client.sendDomToLSRS(this.ctx, processedSnapshot, snapshotUuid);
+                             }
 
-                            let snapshotUploadResponse = await this.ctx.client.uploadSnapshotToS3(this.ctx, uploadUrl, processedSnapshot);
+
                             if (!snapshotUploadResponse || Object.keys(snapshotUploadResponse).length === 0) {
                                 this.ctx.log.debug(`snapshot failed; Unable to upload dom to S3`);
                                 this.processedSnapshots.push({ name: snapshot?.name, error: `snapshot failed; Unable to upload dom to S3` });

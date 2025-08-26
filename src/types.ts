@@ -37,6 +37,7 @@ export interface Context {
         userAgent?: string;
         requestHeaders?: Array<Record<string, string>>;
         allowDuplicateSnapshotNames?: boolean;
+        useLambdaInternal?: boolean;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;

@@ -92,10 +92,10 @@ export default class httpClient {
 
     async request(config: AxiosRequestConfig, log: Logger): Promise<Record<string, any>> {
         log.debug(`http request: ${config.method} ${config.url}`);
-        if (config && config.data && !config.data.name && !config.data.snapshot) {
+        if (config && config.data && !config.data.skipLogging && !config.data.name && !config.data.snapshot) {
             log.debug(config.data);
         }
-        if (config && config.data && config.data.snapshotUuid) {
+        if (config && config.data && !config.data.skipLogging && config.data.snapshotUuid) {
             log.debug(config.data);
         }
         return this.axiosInstance.request(config)
@@ -497,6 +497,38 @@ export default class httpClient {
         }, ctx.log)
     }
 
+    sendDomToLSRS(ctx: Context, snapshot: ProcessedSnapshot, snapshotUuid: string) {
+        return this.request({
+            url: `/upload/dom`,
+            method: 'POST',
+            data: {
+                buildId: ctx.build.id,
+                snapshotName: snapshot.name,
+                snapshotUuid: snapshotUuid,
+                domContent: snapshot,
+                skipLogging: true
+            }
+        }, ctx.log);
+    }
+
+    sendDomToLSRSForCaps(ctx: Context, snapshot: ProcessedSnapshot, snapshotUuid: string, capsBuildId: string, capsProjectToken: string) {
+        return this.request({
+            url: `/upload/dom`,
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                projectToken: capsProjectToken !== '' ? capsProjectToken : this.projectToken
+            },
+            data: {
+                buildId: capsBuildId,
+                snapshotName: snapshot.name,
+                snapshotUuid: snapshotUuid,
+                domContent: snapshot,
+                skipLogging: true
+            }
+        }, ctx.log);
+    }
+
     uploadLogs(ctx: Context, uploadURL: string) {
         const fileStream = fs.createReadStream(constants.LOG_FILE_PATH);
         const { size } = fs.statSync(constants.LOG_FILE_PATH);
@@ -512,6 +544,20 @@ export default class httpClient {
             maxBodyLength: Infinity, // prevent axios from limiting the body size
             maxContentLength: Infinity, // prevent axios from limiting the content size
         }, ctx.log)
+    }
+
+    sendCliLogsToLSRS(ctx: Context) {
+        const logContent = fs.readFileSync(constants.LOG_FILE_PATH, 'utf-8');
+
+        return this.request({
+            url: `/upload/logs`,
+            method: 'POST',
+            data: {
+                buildId: ctx.build.id,
+                logContent: logContent,
+                skipLogging: true
+            }
+        }, ctx.log);
     }
 
     uploadSnapshotToS3(ctx: Context, uploadURL: string, snapshot: Snapshot) {
