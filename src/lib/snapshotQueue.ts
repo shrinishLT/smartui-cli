@@ -422,6 +422,9 @@ export default class Queue {
                                         this.ctx.log.debug(`Closed browser context for snapshot ${snapshot.name}`);
                                     }
                                 }
+                                if(snapshot?.options?.contextId){
+                                    this.ctx.contextToSnapshotMap?.set(snapshot?.options?.contextId,2);
+                                }
                                 this.processNext();
                             } else {
                                 await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors,calculateVariantCountFromSnapshot(processedSnapshot, this.ctx.config),snapshot?.options?.sync);
