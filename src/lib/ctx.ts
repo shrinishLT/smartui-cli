@@ -101,6 +101,11 @@ export default (options: Record<string, string>): Context => {
         useLambdaInternal = true;
     }
 
+    //if config.waitForPageRender has value and if its less than 30000 then make it to 30000 default
+    if (config.waitForPageRender && config.waitForPageRender < 30000) {
+        config.waitForPageRender = 30000;
+    }
+
     return {
         env: env,
         log: logger,
