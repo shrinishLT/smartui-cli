@@ -197,10 +197,14 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 							replyCode = 200;
 							replyBody = externalResponse.data;
 							return reply.code(replyCode).send(replyBody);
-						} else if (externalResponse.statusCode === 202 || externalResponse.statusCode === 404) {
-							ctx.log.debug(`External API attempt: Still processing, waiting 5 seconds...`);
+						} else if (externalResponse.statusCode === 202 ) {
+							replyBody= externalResponse.data;
+							ctx.log.debug(`External API attempt: Still processing, Pending Screenshots ${externalResponse.snapshotCount}`);
 							await new Promise(resolve => setTimeout(resolve, 5000));
-						} else {
+						}else if(externalResponse.statusCode===404){
+							ctx.log.debug(`Snapshot still processing, not uploaded`);
+							await new Promise(resolve => setTimeout(resolve, 5000));
+						}else {
 							ctx.log.debug(`Unexpected response from external API: ${JSON.stringify(externalResponse)}`);
 							replyCode = 500;
 							replyBody = { 
