@@ -321,7 +321,7 @@ export default class httpClient {
         }, ctx.log)
     }
 
-    processSnapshot(ctx: Context, snapshot: ProcessedSnapshot, snapshotUuid: string,  discoveryErrors: DiscoveryErrors) {
+    processSnapshot(ctx: Context, snapshot: ProcessedSnapshot, snapshotUuid: string,  discoveryErrors: DiscoveryErrors, variantCount: number, sync: boolean = false) {
         return this.request({
             url: `/build/${ctx.build.id}/snapshot`,
             method: 'POST',
@@ -330,12 +330,14 @@ export default class httpClient {
                 name: snapshot.name,
                 url: snapshot.url,
                 snapshotUuid: snapshotUuid,
+                variantCount: variantCount,
                 test: {
                     type: ctx.testType,
                     source: 'cli'
                 },
                 doRemoteDiscovery: snapshot.options.doRemoteDiscovery,
                 discoveryErrors: discoveryErrors,
+                sync: sync
             }
         }, ctx.log)
     }
@@ -622,5 +624,15 @@ export default class httpClient {
             method: 'POST',
             data: requestData
         }, ctx.log)
+    }
+
+    getSnapshotStatus(snapshotName: string, snapshotUuid: string, ctx: Context): Promise<Record<string, any>> {
+        return this.request({
+            url: `/snapshot/status?buildId=${ctx.build.id}&snapshotName=${snapshotName}&snapshotUUID=${snapshotUuid}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }, ctx.log);
     }
 }

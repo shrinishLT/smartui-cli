@@ -3,7 +3,7 @@ import { Snapshot, Context } from "../types.js";
 import constants from "./constants.js";
 import processSnapshot, {prepareSnapshot} from "./processSnapshot.js"
 import { v4 as uuidv4 } from 'uuid';
-import { startPolling, stopTunnelHelper } from "./utils.js";
+import { startPolling, stopTunnelHelper, calculateVariantCountFromSnapshot } from "./utils.js";
 
 const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 export default class Queue {
@@ -21,6 +21,16 @@ export default class Queue {
 
     enqueue(item: Snapshot): void {
         this.snapshots.push(item);
+        if (!this.ctx.config.delayedUpload) {
+            if (!this.processing) {
+                this.processing = true;
+                this.processNext();
+            }
+        }
+    }
+
+    enqueueFront(item: Snapshot): void {
+        this.snapshots.unshift(item);
         if (!this.ctx.config.delayedUpload) {
             if (!this.processing) {
                 this.processing = true;
@@ -128,6 +138,8 @@ export default class Queue {
         }
         return drop;
     }
+
+    
 
     private filterVariants(snapshot: Snapshot, config: any): boolean {
         let allVariantsDropped = true;
@@ -273,6 +285,7 @@ export default class Queue {
                 this.processingSnapshot = snapshot?.name;
                 let drop = false;
 
+
                 if (this.ctx.isStartExec && !this.ctx.config.tunnel) {
                     this.ctx.log.info(`Processing Snapshot: ${snapshot?.name}`);
                 }
@@ -332,6 +345,7 @@ export default class Queue {
 
 
                     if (useCapsBuildId) {
+                        this.ctx.log.info(`Using cached buildId: ${capsBuildId}`);
                         if (useKafkaFlowCaps) {
                             const snapshotUuid = uuidv4();
                             let uploadDomToS3 = this.ctx.config.useLambdaInternal || uploadDomToS3ViaEnv;
@@ -378,18 +392,23 @@ export default class Queue {
                             }
                         }
                         if (this.ctx.build && this.ctx.build.useKafkaFlow) {
-                            const snapshotUuid = uuidv4();
+                            let snapshotUuid = uuidv4();
                             let snapshotUploadResponse
-                            let uploadDomToS3 = this.ctx.config.useLambdaInternal || uploadDomToS3ViaEnv;
-                            if (!uploadDomToS3) {
+                            if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap?.has(snapshot.options.contextId)) {
+                                snapshotUuid = snapshot.options.contextId;
+                             }
+                             let uploadDomToS3 = this.ctx.config.useLambdaInternal || uploadDomToS3ViaEnv;
+                             if (!uploadDomToS3) {
                                 this.ctx.log.debug(`Uploading dom to S3 for snapshot using presigned URL`);
                                 const presignedResponse = await this.ctx.client.getS3PresignedURLForSnapshotUpload(this.ctx, processedSnapshot.name, snapshotUuid);
                                 const uploadUrl = presignedResponse.data.url;
                                 snapshotUploadResponse = await this.ctx.client.uploadSnapshotToS3(this.ctx, uploadUrl, processedSnapshot);
-                            } else {
+                             } else {
                                 this.ctx.log.debug(`Uploading dom to S3 for snapshot using LSRS`);
                                 snapshotUploadResponse = await this.ctx.client.sendDomToLSRS(this.ctx, processedSnapshot, snapshotUuid);
-                            }
+                             }
+
+
                             if (!snapshotUploadResponse || Object.keys(snapshotUploadResponse).length === 0) {
                                 this.ctx.log.debug(`snapshot failed; Unable to upload dom to S3`);
                                 this.processedSnapshots.push({ name: snapshot?.name, error: `snapshot failed; Unable to upload dom to S3` });
@@ -403,11 +422,19 @@ export default class Queue {
                                         this.ctx.log.debug(`Closed browser context for snapshot ${snapshot.name}`);
                                     }
                                 }
+                                if(snapshot?.options?.contextId){
+                                    this.ctx.contextToSnapshotMap?.set(snapshot?.options?.contextId,2);
+                                }
                                 this.processNext();
                             } else {
-                                await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors);
+                                await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors,calculateVariantCountFromSnapshot(processedSnapshot, this.ctx.config),snapshot?.options?.sync);
+                                if(snapshot?.options?.contextId && this.ctx.contextToSnapshotMap?.has(snapshot.options.contextId)){
+                                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, 1);
+                                }
+                                this.ctx.log.debug(`ContextId: ${snapshot?.options?.contextId} status set to uploaded`);
                             }
                         } else {
+                            this.ctx.log.info(`Uploading snapshot to S3`);
                             await this.ctx.client.uploadSnapshot(this.ctx, processedSnapshot,  discoveryErrors);
                         }
                         this.ctx.totalSnapshots++;
@@ -418,6 +445,9 @@ export default class Queue {
             } catch (error: any) {
                 this.ctx.log.debug(`snapshot failed; ${error}`);
                 this.processedSnapshots.push({ name: snapshot?.name, error: error.message });
+                if (snapshot?.options?.contextId && this.ctx.contextToSnapshotMap) {
+                    this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, 2);
+                }
             }
             // Close open browser contexts and pages
             if (this.ctx.browser) {
