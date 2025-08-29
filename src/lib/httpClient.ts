@@ -6,7 +6,6 @@ import constants from './constants.js';
 import type { Logger } from 'winston'
 import pkgJSON from './../../package.json'
 import https from 'https';
-import logger from './logger.js';
 
 export default class httpClient {
     axiosInstance: AxiosInstance;
@@ -148,7 +147,6 @@ export default class httpClient {
                 accessKey: env.LT_ACCESS_KEY
             }
         }, log);
-        logger.debug(`Response from auth is ${JSON.stringify(response)}`);
         if (response && response.projectToken) {
             this.projectToken = response.projectToken;
             env.PROJECT_TOKEN = response.projectToken;
@@ -185,7 +183,6 @@ export default class httpClient {
                 accessKey: passWord
             }
         }, log);
-        ctx.log.debug(`Response from authExec is ${JSON.stringify(response)}`);
         if (response && response.projectToken) {
             let orgId = 0;
             let userId = 0;
@@ -213,6 +210,10 @@ export default class httpClient {
         return this.request({
             url: '/build',
             method: 'POST',
+            headers:{
+                userName,
+                accessKey
+            },
             data: {
                 git,
                 config,
@@ -222,9 +223,7 @@ export default class httpClient {
                 smartGit,
                 markBaseline,
                 baselineBuild,
-                scheduled,
-                userName,
-                accessKey
+                scheduled
             }
         }, log)
     }
