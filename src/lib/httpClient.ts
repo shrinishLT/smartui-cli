@@ -6,6 +6,7 @@ import constants from './constants.js';
 import type { Logger } from 'winston'
 import pkgJSON from './../../package.json'
 import https from 'https';
+import logger from './logger.js';
 
 export default class httpClient {
     axiosInstance: AxiosInstance;
@@ -142,7 +143,12 @@ export default class httpClient {
         const response = await this.request({
             url: '/token/verify',
             method: 'GET',
+            headers:{
+                userName : env.LT_USERNAME,
+                accessKey: env.LT_ACCESS_KEY
+            }
         }, log);
+        logger.debug(`Response from auth is ${JSON.stringify(response)}`);
         if (response && response.projectToken) {
             this.projectToken = response.projectToken;
             env.PROJECT_TOKEN = response.projectToken;
@@ -157,8 +163,8 @@ export default class httpClient {
 
     async authExec(ctx: Context, log: Logger, env: Env): Promise<{ authResult: number, orgId: number, userId: number }> {
         let authResult = 1;
-        let userName = '';
-        let passWord = '';
+        let userName = ctx.env.LT_USERNAME;
+        let passWord = ctx.env.LT_ACCESS_KEY;
         if (ctx.config.tunnel) {
             if (ctx.config.tunnel?.user && ctx.config.tunnel?.key) {
                 userName = ctx.config.tunnel.user
@@ -179,6 +185,7 @@ export default class httpClient {
                 accessKey: passWord
             }
         }, log);
+        ctx.log.debug(`Response from authExec is ${JSON.stringify(response)}`);
         if (response && response.projectToken) {
             let orgId = 0;
             let userId = 0;
@@ -202,7 +209,7 @@ export default class httpClient {
         }
     }
 
-    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean, smartGit: boolean, markBaseline: boolean, baselineBuild: string, scheduled?: string) {
+    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean, smartGit: boolean, markBaseline: boolean, baselineBuild: string, scheduled?: string,userName?: string,accessKey?: string) {
         return this.request({
             url: '/build',
             method: 'POST',
@@ -215,7 +222,9 @@ export default class httpClient {
                 smartGit,
                 markBaseline,
                 baselineBuild,
-                scheduled
+                scheduled,
+                userName,
+                accessKey
             }
         }, log)
     }
