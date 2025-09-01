@@ -57,7 +57,7 @@ async function captureScreenshotsForConfig(
 
             await page?.screenshot({ path: ssPath, fullPage });
 
-            await ctx.client.uploadScreenshot(ctx.build, ssPath, name, browserName, viewportString, ctx.log);
+            await ctx.client.uploadScreenshot(ctx.build, ssPath, name, browserName, viewportString, url, ctx.log);
         }
     } catch (error) {
         throw new Error(`captureScreenshotsForConfig failed for browser ${browserName}; error: ${error}`);
