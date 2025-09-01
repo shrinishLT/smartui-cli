@@ -142,6 +142,10 @@ export default class httpClient {
         const response = await this.request({
             url: '/token/verify',
             method: 'GET',
+            headers:{
+                userName : env.LT_USERNAME,
+                accessKey: env.LT_ACCESS_KEY
+            }
         }, log);
         if (response && response.projectToken) {
             this.projectToken = response.projectToken;
@@ -157,8 +161,8 @@ export default class httpClient {
 
     async authExec(ctx: Context, log: Logger, env: Env): Promise<{ authResult: number, orgId: number, userId: number }> {
         let authResult = 1;
-        let userName = '';
-        let passWord = '';
+        let userName = ctx.env.LT_USERNAME;
+        let passWord = ctx.env.LT_ACCESS_KEY;
         if (ctx.config.tunnel) {
             if (ctx.config.tunnel?.user && ctx.config.tunnel?.key) {
                 userName = ctx.config.tunnel.user
@@ -202,10 +206,14 @@ export default class httpClient {
         }
     }
 
-    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean, smartGit: boolean, markBaseline: boolean, baselineBuild: string, scheduled?: string) {
+    createBuild(git: Git, config: any, log: Logger, buildName: string, isStartExec: boolean, smartGit: boolean, markBaseline: boolean, baselineBuild: string, scheduled?: string,userName?: string,accessKey?: string) {
         return this.request({
             url: '/build',
             method: 'POST',
+            headers:{
+                userName,
+                accessKey
+            },
             data: {
                 git,
                 config,
