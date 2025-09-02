@@ -130,8 +130,9 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				let resp = await ctx.client.getS3PreSignedURL(ctx);
 				await ctx.client.uploadLogs(ctx, resp.data.url);
 			} else {
-				ctx.log.debug(`Log file to be uploaded via LSRS`)
-				let resp = ctx.client.sendCliLogsToLSRS(ctx);
+				ctx.log.debug(`Skipping upload of CLI logs as useLambdaInternal is set`)
+				// ctx.log.debug(`Log file to be uploaded via LSRS`)
+				// let resp = ctx.client.sendCliLogsToLSRS(ctx);
 			}
 
 			if (pingIntervalId !== null) {
