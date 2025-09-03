@@ -118,21 +118,42 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 					}
 				}, 1000);
 			})
-			await ctx.client.finalizeBuild(ctx.build.id, ctx.totalSnapshots, ctx.log);
+
+			for (const [sessionId, capabilities] of ctx.sessionCapabilitiesMap.entries()) {
+                try {
+                    const buildId = capabilities?.buildId || '';
+                    const projectToken = capabilities?.projectToken || '';
+                    const totalSnapshots = capabilities?.snapshotCount || 0;
+                    const sessionBuildUrl = capabilities?.buildURL || '';
+                    const testId = capabilities?.id || '';
+
+                    if (buildId && projectToken) {
+                        await ctx.client.finalizeBuildForCapsWithToken(buildId, totalSnapshots, projectToken, ctx.log);
+                    }
+
+                    if (testId && buildId) {
+                        buildUrls += `TestId ${testId}: ${sessionBuildUrl}\n`;
+                    }
+                } catch (error: any) {
+                    ctx.log.debug(`Error finalizing build for session ${sessionId}: ${error.message}`);
+                }
+            }
+
+			if (ctx.build && ctx.build.id) {
+				await ctx.client.finalizeBuild(ctx.build.id, ctx.totalSnapshots, ctx.log);
+				let uploadCLILogsToS3 = ctx?.config?.useLambdaInternal || uploadDomToS3ViaEnv;
+				if (!uploadCLILogsToS3) {
+					ctx.log.debug(`Log file to be uploaded`)
+					let resp = await ctx.client.getS3PreSignedURL(ctx);
+					await ctx.client.uploadLogs(ctx, resp.data.url);
+				} else {
+					ctx.log.debug(`Skipping upload of CLI logs as useLambdaInternal is set`)
+				}
+			}
+
 			await ctx.browser?.close();
 			if (ctx.server){
 				ctx.server.close();
-			}
-
-			let uploadCLILogsToS3 = ctx?.config?.useLambdaInternal || uploadDomToS3ViaEnv;
-			if (!uploadCLILogsToS3) {
-				ctx.log.debug(`Log file to be uploaded`)
-				let resp = await ctx.client.getS3PreSignedURL(ctx);
-				await ctx.client.uploadLogs(ctx, resp.data.url);
-			} else {
-				ctx.log.debug(`Skipping upload of CLI logs as useLambdaInternal is set`)
-				// ctx.log.debug(`Log file to be uploaded via LSRS`)
-				// let resp = ctx.client.sendCliLogsToLSRS(ctx);
 			}
 
 			if (pingIntervalId !== null) {
