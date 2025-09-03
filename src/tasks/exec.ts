@@ -39,7 +39,6 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                     if (code !== null) {
                         task.title = `Execution of '${ctx.args.execCommand?.join(' ')}' completed; exited with code ${code}`;
                         if (code !== 0) {
-                            reject();
                             process.exitCode = code
                         }
                     } else if (signal !== null) {
