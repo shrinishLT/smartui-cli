@@ -292,7 +292,7 @@ export default class Queue {
 
                 if (!this.ctx.config.delayedUpload && snapshot && snapshot.name && this.snapshotNames.includes(snapshot.name) && !this.ctx.config.allowDuplicateSnapshotNames) {
                     drop = true;
-                    this.ctx.log.info(`Skipping duplicate SmartUI snapshot '${snapshot.name}'. To capture duplicate screenshots, please set the 'delayedUpload' configuration as true in your config file.`);
+                    this.ctx.log.info(`Skipping duplicate SmartUI snapshot '${snapshot.name}'. To capture duplicate screenshots, please set the 'allowDuplicateSnapshotNames' or 'delayedUpload' configuration as true in your config file.`);
                 }
 
                 if (this.ctx.config.delayedUpload && snapshot && snapshot.name && this.snapshotNames.includes(snapshot.name)) {
