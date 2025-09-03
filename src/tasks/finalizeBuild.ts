@@ -49,7 +49,6 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                             } else {
                                 is_baseline = false;
                             }
-                            console.log(`start polling was called at finalize build for buildId: ${buildId}`)
                             startPolling(ctx, buildId, is_baseline, capabilities.projectToken);
                             await new Promise(resolve => setTimeout(resolve, 7000));
                             ctx.fetchResultsForBuild.push(buildId);
@@ -86,6 +85,12 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                         ctx.log.debug(`Log file to be uploaded via LSRS`)
                         let resp = ctx.client.sendCliLogsToLSRS(ctx);
                     }
+                }
+                if (process.exitCode && process.exitCode !== 0) {
+                    ctx.log.error(`Exiting process with code ${process.exitCode}`);
+                    task.output = chalk.gray(`Exiting process with code ${process.exitCode}`);
+                    task.title = 'Build finalized with errors';
+                    throw new Error(`Process exited with code ${process.exitCode}`);
                 }
             } catch (error: any) {
                 ctx.log.debug(error);
