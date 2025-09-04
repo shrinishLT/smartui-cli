@@ -57,7 +57,7 @@ async function captureScreenshotsForConfig(
 
             await page?.screenshot({ path: ssPath, fullPage });
 
-            await ctx.client.uploadScreenshot(ctx.build, ssPath, name, browserName, viewportString, ctx.log);
+            await ctx.client.uploadScreenshot(ctx.build, ssPath, name, browserName, viewportString, url, ctx.log);
         }
     } catch (error) {
         throw new Error(`captureScreenshotsForConfig failed for browser ${browserName}; error: ${error}`);
@@ -253,7 +253,7 @@ export async function uploadScreenshots(ctx: Context): Promise<void> {
                         }
                     }
 
-                    await ctx.client.uploadScreenshot(ctx.build, filePath, ssId, 'default', viewport, ctx.log);
+                    await ctx.client.uploadScreenshot(ctx.build, filePath, ssId, 'default', viewport,"", ctx.log);
                     ctx.log.info(`${filePath} : uploaded successfully`)
                     noOfScreenshots++;
                 } else {
