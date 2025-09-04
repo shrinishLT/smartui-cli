@@ -253,7 +253,7 @@ export async function uploadScreenshots(ctx: Context): Promise<void> {
                         }
                     }
 
-                    await ctx.client.uploadScreenshot(ctx.build, filePath, ssId, 'default', viewport, ctx.log);
+                    await ctx.client.uploadScreenshot(ctx.build, filePath, ssId, 'default', viewport,"", ctx.log);
                     ctx.log.info(`${filePath} : uploaded successfully`)
                     noOfScreenshots++;
                 } else {
