@@ -15,7 +15,7 @@ export default class httpClient {
     accessKey: string;
 
     private handleHttpError(error: any, log: Logger): never {
-        if (error.response) {
+        if (error && error.response) {
             log.debug(`http response error: ${JSON.stringify({
                 status: error.response.status,
                 body: error.response.data
