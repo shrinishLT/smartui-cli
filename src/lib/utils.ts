@@ -514,6 +514,7 @@ export function calculateVariantCountFromSnapshot(snapshot: any, globalConfig?: 
 export function startPdfPolling(ctx: Context) {
     console.log(chalk.yellow('\nFetching PDF test results...'));
 
+    ctx.log.debug(`Starting fetching results for build: ${ctx.build.id || ctx.build.name}`);
     if (!ctx.build.id && !ctx.build.name) {
         ctx.log.error(chalk.red('Error: Build information not found for fetching results'));
         return

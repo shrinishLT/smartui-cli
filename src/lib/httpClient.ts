@@ -655,9 +655,7 @@ export default class httpClient {
         const response = await this.axiosInstance.request({
             url: ctx.env.SMARTUI_UPLOAD_URL + '/pdf/upload',
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: form.getHeaders(),
             data: form,
         });
 
