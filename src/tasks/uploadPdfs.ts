@@ -19,8 +19,8 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 task.title = 'PDFs uploaded successfully';
             } catch (error: any) {
                 ctx.log.debug(error);
-                task.output = chalk.gray(`${error.message}`);
-                throw new Error('Uploading PDFs failed');
+                task.output = chalk.red(`${error.message}`);
+                throw new Error('PDF upload failed');
             }
         },
         rendererOptions: { persistentOutput: true },
@@ -49,10 +49,13 @@ async function uploadPdfs(ctx: Context, pdfPath: string): Promise<void> {
         ctx.build.name = buildName;
     }
 
-    const response = await ctx.client.uploadPdf(ctx, formData, ctx.log, buildName);
-
-    if (response && response.buildId) {
-        ctx.build.id = response.buildId;
-        ctx.log.debug(`PDF upload successful. Build ID: ${ctx.build.id}`);
+    try {
+        const response = await ctx.client.uploadPdf(ctx, formData, buildName);
+        if (response && response.buildId) {
+            ctx.build.id = response.buildId;
+            ctx.log.debug(`PDF upload successful. Build ID: ${ctx.build.id}`);
+        }
+    } catch (error : any) {
+        throw new Error(error.message);
     }
 }
