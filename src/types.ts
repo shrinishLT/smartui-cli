@@ -93,6 +93,7 @@ export interface Context {
 export interface Env {
     PROJECT_TOKEN: string;
     SMARTUI_CLIENT_API_URL: string;
+    SMARTUI_UPLOAD_URL: string;
     SMARTUI_DO_NOT_USE_CAPTURED_COOKIES: boolean;
     SMARTUI_GIT_INFO_FILEPATH: string | undefined;
     HTTP_PROXY: string | undefined;
