@@ -4,6 +4,7 @@ export default (): Env => {
     const {
         PROJECT_TOKEN = '',
         SMARTUI_CLIENT_API_URL = 'https://api.lambdatest.com/visualui/1.0',
+        SMARTUI_UPLOAD_URL = 'https://api.lambdatest.com',
         SMARTUI_GIT_INFO_FILEPATH,
         SMARTUI_DO_NOT_USE_CAPTURED_COOKIES,
         HTTP_PROXY,
@@ -27,6 +28,7 @@ export default (): Env => {
     return {
         PROJECT_TOKEN,
         SMARTUI_CLIENT_API_URL,
+        SMARTUI_UPLOAD_URL: SMARTUI_UPLOAD_URL,
         SMARTUI_GIT_INFO_FILEPATH,
         HTTP_PROXY,
         HTTPS_PROXY,

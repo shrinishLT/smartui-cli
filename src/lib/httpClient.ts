@@ -644,4 +644,74 @@ export default class httpClient {
             }
         }, ctx.log);
     }
+
+    async uploadPdf(ctx: Context, form: FormData, log: Logger, buildName?: string): Promise<any> {
+        form.append('projectToken', this.projectToken);
+        if (ctx.build.name !== undefined && ctx.build.name !== '') {
+            form.append('buildName', buildName);
+        }
+        ctx.log.debug('Uploading PDF to SmartUI...');
+
+        const response = await this.axiosInstance.request({
+            url: ctx.env.SMARTUI_UPLOAD_URL + '/pdf/upload',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            data: form,
+        });
+
+        log.debug(`http response: ${JSON.stringify({
+            status: response.status,
+            headers: response.headers,
+            body: response.data
+        })}`);
+
+        return response.data;
+    }
+
+    async fetchPdfResults(ctx: Context, log: Logger): Promise<any> {
+        const params: Record<string, string> = {
+            projectToken: this.projectToken
+        };
+
+        // Use buildId if available, otherwise use buildName
+        if (ctx.build.id) {
+            params.buildId = ctx.build.id;
+        } else if (ctx.build.name) {
+            params.buildName = ctx.build.name;
+        }
+
+        const auth = Buffer.from(`${this.username}:${this.accessKey}`).toString('base64');
+
+        try {
+            const response = await axios.request({
+                url: ctx.env.SMARTUI_UPLOAD_URL + '/automation/smart-ui/screenshot/build/status',
+                method: 'GET',
+                params: params,
+                headers: {
+                    'accept': 'application/json',
+                    'Authorization': `Basic ${auth}`
+                }
+            });
+
+            log.debug(`http response: ${JSON.stringify({
+                status: response.status,
+                headers: response.headers,
+                body: response.data
+            })}`);
+
+            return response.data;
+        } catch (error: any) {
+            log.error(`Error fetching PDF results: ${error.message}`);
+            if (error.response) {
+                log.debug(`Response error: ${JSON.stringify({
+                    status: error.response.status,
+                    data: error.response.data
+                })}`);
+            }
+            throw error;
+        }
+    }
 }
+
