@@ -24,7 +24,7 @@ command
 
         if (!fs.existsSync(directory)) {
             console.log(`Error: The provided directory ${directory} not found.`);
-            return;
+            process.exit(1);
         }
 
         ctx.uploadFilePath = directory;
