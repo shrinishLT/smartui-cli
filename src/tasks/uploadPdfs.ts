@@ -30,13 +30,18 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
 
 async function uploadPdfs(ctx: Context, pdfPath: string): Promise<void> {
     const formData = new FormData();
-    const files = fs.readdirSync(pdfPath);
-    const pdfFiles = files.filter(file => file.endsWith('.pdf'));
 
-    pdfFiles.forEach(pdf => {
-        const filePath = path.join(pdfPath, pdf);
-        formData.append('pathToFiles', fs.createReadStream(filePath));
-    })
+    if (pdfPath.endsWith('.pdf')) {
+        formData.append('pathToFiles', fs.createReadStream(pdfPath));
+    } else {
+        const files = fs.readdirSync(pdfPath);
+        const pdfFiles = files.filter(file => file.endsWith('.pdf'));
+
+        pdfFiles.forEach(pdf => {
+            const filePath = path.join(pdfPath, pdf);
+            formData.append('pathToFiles', fs.createReadStream(filePath));
+        })
+    }
 
     const buildName = ctx.options.buildName;
 
