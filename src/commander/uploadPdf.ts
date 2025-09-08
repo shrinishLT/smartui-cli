@@ -54,6 +54,7 @@ command
             }
         } catch (error) {
             console.log('\nRefer docs: https://www.lambdatest.com/support/docs/smart-visual-regression-testing/');
+            process.exit(1);
         }
     });
 
