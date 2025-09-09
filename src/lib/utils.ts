@@ -510,3 +510,75 @@ export function calculateVariantCountFromSnapshot(snapshot: any, globalConfig?: 
 
     return variantCount;
 } 
+
+export function validateCoordinates(
+    coordString: string, 
+    viewportSize: { width: number, height: number },
+    snapshotName: string,
+    viewportString: string
+): { valid: boolean, error?: string, coords?: { top: number, bottom: number, left: number, right: number } } {
+    
+    // Parse coordinates
+    const coords = coordString.split(',').map(Number);
+    
+    // Check format
+    if (coords.length !== 4) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinates format: ${coordString}. Expected: top,bottom,left,right` 
+        };
+    }
+    
+    const [top, bottom, left, right] = coords;
+    
+    // Check if all values are numbers
+    if (coords.some(isNaN)) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate values: ${coordString}. All values must be numbers` 
+        };
+    }
+    
+    // Check coordinate bounds
+    if (top < 0 || left < 0 || bottom < 0 || right < 0) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate bounds: ${coordString}. top,left,bottom,right must be >= 0` 
+        };
+    }
+    
+    if (top >= bottom) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate bounds: ${coordString}. top must be < bottom` 
+        };
+    }
+    
+    if (left >= right) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate bounds: ${coordString}. left must be < right` 
+        };
+    }
+    
+    // Check viewport bounds
+    if (bottom > viewportSize.height) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName} viewport ${viewportString}, coordinates exceed viewport bounds: ${coordString}. bottom (${bottom}) exceeds viewport height (${viewportSize.height})` 
+        };
+    }
+    
+    if (right > viewportSize.width) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName} viewport ${viewportString}, coordinates exceed viewport bounds: ${coordString}. right (${right}) exceeds viewport width (${viewportSize.width})` 
+        };
+    }
+    
+    // All validations passed
+    return { 
+        valid: true, 
+        coords: { top, bottom, left, right } 
+    };
+}

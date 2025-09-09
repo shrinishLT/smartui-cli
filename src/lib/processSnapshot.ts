@@ -1,5 +1,5 @@
 import { Snapshot, Context, DiscoveryErrors } from "../types.js";
-import { scrollToBottomAndBackToTop, getRenderViewports, getRenderViewportsForOptions } from "./utils.js"
+import { scrollToBottomAndBackToTop, getRenderViewports, getRenderViewportsForOptions, validateCoordinates } from "./utils.js"
 import { chromium, Locator } from "@playwright/test"
 import constants from "./constants.js";
 import { updateLogContext } from '../lib/logger.js'
@@ -125,6 +125,9 @@ export async function prepareSnapshot(snapshot: Snapshot, ctx: Context): Promise
                         break;
                     case 'cssSelector':
                         selectors.push(...value);
+                        break;
+                    case 'coordinates':
+                        selectors.push(...value.map(e => `coordinates=${e}`));
                         break;
                 }
             }
@@ -500,6 +503,9 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                     case 'cssSelector':
                         selectors.push(...value);
                         break;
+                    case 'coordinates':
+                        selectors.push(...value.map(e => `coordinates=${e}`));
+                        break;
                 }
             }
         }
@@ -663,6 +669,33 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
             if (!Array.isArray(processedOptions[ignoreOrSelectBoxes][viewportString])) processedOptions[ignoreOrSelectBoxes][viewportString] = []
 
             for (const selector of selectors) {
+                // Handle coordinates validation
+                if (selector.startsWith('coordinates=')) {
+                    const coordString = selector.replace('coordinates=', '');
+                    const viewportSize = await page.viewportSize();
+                    
+                    if (!viewportSize) {
+                        optionWarnings.add(`for snapshot ${snapshot.name} viewport ${viewportString}, unable to get viewport size for coordinate validation`);
+                        continue;
+                    }
+                    
+                    const validation = validateCoordinates(coordString, viewportSize, snapshot.name, viewportString);
+
+                    
+                    if (!validation.valid) {
+                        optionWarnings.add(validation.error!);
+                        continue;
+                    }
+                    
+                    // Coordinates are valid - create a coordinate element
+                    const coordinateElement = { 
+                        type: 'coordinates', 
+                        ...validation.coords
+                    };
+                    locators.push(coordinateElement as any);
+                    continue;
+                }
+                
                 let l = await page.locator(selector).all()
                 if (l.length === 0) {
                     optionWarnings.add(`for snapshot ${snapshot.name} viewport ${viewportString}, no element found for selector ${selector}`);
@@ -670,7 +703,22 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                 }
                 locators.push(...l);
             }
+
             for (const locator of locators) {
+                if (locator && typeof locator === 'object' && locator.hasOwnProperty('type') && (locator as any).type === 'coordinates') {
+                    const coordLocator = locator as any;
+                    const { top, bottom, left, right } = coordLocator;
+                    console.log(`locator: ${JSON.stringify(locator)}`);
+                    // Coordinates already validated, push directly
+                    processedOptions[ignoreOrSelectBoxes][viewportString].push({
+                        left: left,
+                        top: top,
+                        right: right,
+                        bottom: bottom
+                    });
+                    continue;
+                }
+                
                 let bb = await locator.boundingBox();
                 if (bb) {
                     // Calculate top and bottom from the bounding box properties
@@ -738,3 +786,5 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
         discoveryErrors: discoveryErrors
     }
 }
+
+

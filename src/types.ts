@@ -122,13 +122,15 @@ export interface Snapshot {
             id?: Array<string>,
             class?: Array<string>,
             cssSelector?: Array<string>,
-            xpath?: Array<string>
+            xpath?: Array<string>,
+            coordinates?: Array<string>
         },
         selectDOM?: {
             id?: Array<string>,
             class?: Array<string>,
             cssSelector?: Array<string>,
-            xpath?: Array<string>
+            xpath?: Array<string>,
+            coordinates?: Array<string>
         },
         element?: {
             id?: string,
