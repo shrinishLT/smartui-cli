@@ -63,7 +63,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 						}
 					} catch (error: any) {
 						ctx.log.debug(`Failed to fetch capabilities for sessionId ${sessionId}: ${error.message}`);
-						console.log(`Failed to fetch capabilities for sessionId ${sessionId}: ${error.message}`);
+						// console.log(`Failed to fetch capabilities for sessionId ${sessionId}: ${error.message}`);
 					}
 				}
 
