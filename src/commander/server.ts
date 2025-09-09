@@ -50,11 +50,12 @@ command
 
         try {
             await tasks.run(ctx);
-            startPingPolling(ctx);
-            if (ctx.options.fetchResults) {
+            if (ctx.build && ctx.build.id) {
+                startPingPolling(ctx);
+            }
+            if (ctx.options.fetchResults && ctx.build && ctx.build.id) {
                 startPolling(ctx, '', false, '')
             }
-            
     
         } catch (error) {
             console.error('Error during server execution:', error);
