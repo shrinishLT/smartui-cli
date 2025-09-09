@@ -708,7 +708,6 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                 if (locator && typeof locator === 'object' && locator.hasOwnProperty('type') && (locator as any).type === 'coordinates') {
                     const coordLocator = locator as any;
                     const { top, bottom, left, right } = coordLocator;
-                    console.log(`locator: ${JSON.stringify(locator)}`);
                     // Coordinates already validated, push directly
                     processedOptions[ignoreOrSelectBoxes][viewportString].push({
                         left: left,
