@@ -181,6 +181,7 @@ export interface Build {
     baseline: boolean;
     useKafkaFlow: boolean;
     hasDiscoveryError: boolean;
+    projectId?: string;
 }
 
 export interface WebConfig {

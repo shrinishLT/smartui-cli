@@ -55,6 +55,9 @@ async function uploadPdfs(ctx: Context, pdfPath: string): Promise<void> {
             ctx.build.id = response.buildId;
             ctx.log.debug(`PDF upload successful. Build ID: ${ctx.build.id}`);
         }
+        if (response && response.projectId) {
+            ctx.build.projectId = response.projectId;
+        }
     } catch (error : any) {
         throw new Error(error.message);
     }
