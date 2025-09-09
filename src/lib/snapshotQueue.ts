@@ -286,7 +286,7 @@ export default class Queue {
                 let drop = false;
 
 
-                if (this.ctx.isStartExec && !this.ctx.config.tunnel) {
+                if (this.ctx.isStartExec) {
                     this.ctx.log.info(`Processing Snapshot: ${snapshot?.name}`);
                 }
 
