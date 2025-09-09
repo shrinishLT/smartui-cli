@@ -526,7 +526,7 @@ export function startPdfPolling(ctx: Context) {
     }
 
     let attempts = 0;
-    const maxAttempts = 30; // 5 minutes (10 seconds * 30)
+    const maxAttempts = 60; // 5 minutes (10 seconds * 30)
 
     console.log(chalk.yellow('Waiting for results...'));
 
@@ -534,47 +534,46 @@ export function startPdfPolling(ctx: Context) {
         attempts++;
 
         try {
-            const response = await ctx.client.fetchPdfResults(ctx, ctx.log);
+            const response = await ctx.client.fetchPdfResults(ctx);
 
-            if (response.status === 'success' && response.data && response.data.Screenshots) {
+            if (response.screenshots) {
                 clearInterval(interval);
 
-                const pdfGroups = groupScreenshotsByPdf(response.data.Screenshots);
-
+                const pdfGroups = groupScreenshotsByPdf(response.screenshots);
                 const pdfsWithMismatches = countPdfsWithMismatches(pdfGroups);
-                const pagesWithMismatches = countPagesWithMismatches(response.data.Screenshots);
+                const pagesWithMismatches = countPagesWithMismatches(response.screenshots);
 
                 console.log(chalk.green('\n✓ PDF Test Results:'));
-                console.log(chalk.green(`Build Name: ${response.data.buildName}`));
-                console.log(chalk.green(`Project Name: ${response.data.projectName}`));
+                console.log(chalk.green(`Build Name: ${response.build.name}`));
+                console.log(chalk.green(`Project Name: ${response.project.name}`));
                 console.log(chalk.green(`Total PDFs: ${Object.keys(pdfGroups).length}`));
-                console.log(chalk.green(`Total Pages: ${response.data.Screenshots.length}`));
+                console.log(chalk.green(`Total Pages: ${response.screenshots.length}`));
 
                 if (pdfsWithMismatches > 0 || pagesWithMismatches > 0) {
-                    console.log(chalk.yellow(`${pdfsWithMismatches} PDFs and ${pagesWithMismatches} Pages in build ${response.data.buildName} have changes present.`));
+                    console.log(chalk.yellow(`${pdfsWithMismatches} PDFs and ${pagesWithMismatches} Pages in build ${response.build.name} have changes present.`));
                 } else {
                     console.log(chalk.green('All PDFs match the baseline.'));
                 }
 
                 Object.entries(pdfGroups).forEach(([pdfName, pages]) => {
-                    const hasMismatch = pages.some(page => page.mismatchPercentage > 0);
+                    const hasMismatch = pages.some(page => page.mismatch_percentage > 0);
                     const statusColor = hasMismatch ? chalk.yellow : chalk.green;
 
                     console.log(statusColor(`\n📄 ${pdfName} (${pages.length} pages)`));
 
                     pages.forEach(page => {
-                        const pageStatusColor = page.mismatchPercentage > 0 ? chalk.yellow : chalk.green;
-                        console.log(pageStatusColor(`  - Page ${getPageNumber(page.screenshotName)}: ${page.status} (Mismatch: ${page.mismatchPercentage}%)`));
+                        const pageStatusColor = page.mismatch_percentage > 0 ? chalk.yellow : chalk.green;
+                        console.log(pageStatusColor(`  - Page ${getPageNumber(page.screenshot_name)}: ${page.status} (Mismatch: ${page.mismatch_percentage}%)`));
                     });
                 });
 
                 const formattedResults = {
-                    status: response.status,
+                    status: 'success',
                     data: {
-                        buildId: response.data.buildId,
-                        buildName: response.data.buildName,
-                        projectName: response.data.projectName,
-                        buildStatus: response.data.buildStatus,
+                        buildId: response.build.id,
+                        buildName: response.build.name,
+                        projectName: response.project.name,
+                        buildStatus: response.build.build_satus,
                         pdfs: formatPdfsForOutput(pdfGroups)
                     }
                 };
@@ -588,12 +587,6 @@ export function startPdfPolling(ctx: Context) {
                 }
 
                 return;
-            } else if (response.status === 'error') {
-                clearInterval(interval);
-                console.log(chalk.red(`\nError fetching results: ${response.message || 'Unknown error'}`));
-                return;
-            } else {
-                process.stdout.write(chalk.yellow('.'));
             }
 
             if (attempts >= maxAttempts) {
@@ -625,7 +618,7 @@ function groupScreenshotsByPdf(screenshots: any[]): Record<string, any[]> {
 
     screenshots.forEach(screenshot => {
         // screenshot name format: "pdf-name.pdf#page-number"
-        const pdfName = screenshot.screenshotName.split('#')[0];
+        const pdfName = screenshot.screenshot_name.split('#')[0];
 
         if (!pdfGroups[pdfName]) {
             pdfGroups[pdfName] = [];
@@ -641,7 +634,7 @@ function countPdfsWithMismatches(pdfGroups: Record<string, any[]>): number {
     let count = 0;
 
     Object.values(pdfGroups).forEach(pages => {
-        if (pages.some(page => page.mismatchPercentage > 0)) {
+        if (pages.some(page => page.mismatch_percentage > 0)) {
             count++;
         }
     });
@@ -650,7 +643,7 @@ function countPdfsWithMismatches(pdfGroups: Record<string, any[]>): number {
 }
 
 function countPagesWithMismatches(screenshots: any[]): number {
-    return screenshots.filter(screenshot => screenshot.mismatchPercentage > 0).length;
+    return screenshots.filter(screenshot => screenshot.mismatch_percentage > 0).length;
 }
 
 function formatPdfsForOutput(pdfGroups: Record<string, any[]>): any[] {
@@ -659,12 +652,11 @@ function formatPdfsForOutput(pdfGroups: Record<string, any[]>): any[] {
             pdfName,
             pageCount: pages.length,
             pages: pages.map(page => ({
-                pageNumber: getPageNumber(page.screenshotName),
-                screenshotId: page.screenshotId,
-                mismatchPercentage: page.mismatchPercentage,
-                threshold: page.threshold,
+                pageNumber: getPageNumber(page.screenshot_name),
+                screenshotId: page.captured_image_id,
+                mismatchPercentage: page.mismatch_percentage,
                 status: page.status,
-                screenshotUrl: page.screenshotUrl
+                screenshotUrl: page.shareable_link
             }))
         };
     });
