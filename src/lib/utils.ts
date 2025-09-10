@@ -518,10 +518,8 @@ export function validateCoordinates(
     viewportString: string
 ): { valid: boolean, error?: string, coords?: { top: number, bottom: number, left: number, right: number } } {
     
-    // Parse coordinates
     const coords = coordString.split(',').map(Number);
     
-    // Check format
     if (coords.length !== 4) {
         return { 
             valid: false, 
@@ -531,7 +529,6 @@ export function validateCoordinates(
     
     const [top, bottom, left, right] = coords;
     
-    // Check if all values are numbers
     if (coords.some(isNaN)) {
         return { 
             valid: false, 
@@ -539,7 +536,6 @@ export function validateCoordinates(
         };
     }
     
-    // Check coordinate bounds
     if (top < 0 || left < 0 || bottom < 0 || right < 0) {
         return { 
             valid: false, 
@@ -561,7 +557,6 @@ export function validateCoordinates(
         };
     }
     
-    // Check viewport bounds
     if (bottom > viewportSize.height) {
         return { 
             valid: false, 
@@ -576,7 +571,6 @@ export function validateCoordinates(
         };
     }
     
-    // All validations passed
     return { 
         valid: true, 
         coords: { top, bottom, left, right } 

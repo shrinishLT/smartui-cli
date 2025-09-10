@@ -669,7 +669,6 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
             if (!Array.isArray(processedOptions[ignoreOrSelectBoxes][viewportString])) processedOptions[ignoreOrSelectBoxes][viewportString] = []
 
             for (const selector of selectors) {
-                // Handle coordinates validation
                 if (selector.startsWith('coordinates=')) {
                     const coordString = selector.replace('coordinates=', '');
                     const viewportSize = await page.viewportSize();
@@ -687,7 +686,6 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                         continue;
                     }
                     
-                    // Coordinates are valid - create a coordinate element
                     const coordinateElement = { 
                         type: 'coordinates', 
                         ...validation.coords
@@ -708,7 +706,6 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                 if (locator && typeof locator === 'object' && locator.hasOwnProperty('type') && (locator as any).type === 'coordinates') {
                     const coordLocator = locator as any;
                     const { top, bottom, left, right } = coordLocator;
-                    // Coordinates already validated, push directly
                     processedOptions[ignoreOrSelectBoxes][viewportString].push({
                         left: left,
                         top: top,
