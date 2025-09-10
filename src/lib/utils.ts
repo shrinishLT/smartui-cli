@@ -669,9 +669,9 @@ function getPageNumber(screenshotName: string): string {
 
 export function validateCoordinates(
     coordString: string, 
-    viewportSize: { width: number, height: number },
-    snapshotName: string,
-    viewportString: string
+    pageHeight: number,
+    pageWidth: number,
+    snapshotName: string
 ): { valid: boolean, error?: string, coords?: { top: number, bottom: number, left: number, right: number } } {
     
     const coords = coordString.split(',').map(Number);
@@ -679,7 +679,7 @@ export function validateCoordinates(
     if (coords.length !== 4) {
         return { 
             valid: false, 
-            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinates format: ${coordString}. Expected: top,bottom,left,right` 
+            error: `for snapshot ${snapshotName}, invalid coordinates format: ${coordString}. Expected: top,bottom,left,right` 
         };
     }
     
@@ -688,42 +688,42 @@ export function validateCoordinates(
     if (coords.some(isNaN)) {
         return { 
             valid: false, 
-            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate values: ${coordString}. All values must be numbers` 
+            error: `for snapshot ${snapshotName}, invalid coordinate values: ${coordString}. All values must be numbers` 
         };
     }
     
     if (top < 0 || left < 0 || bottom < 0 || right < 0) {
         return { 
             valid: false, 
-            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate bounds: ${coordString}. top,left,bottom,right must be >= 0` 
+            error: `for snapshot ${snapshotName}, invalid coordinate bounds: ${coordString}. top,left,bottom,right must be >= 0` 
         };
     }
     
     if (top >= bottom) {
         return { 
             valid: false, 
-            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate bounds: ${coordString}. top must be < bottom` 
+            error: `for snapshot ${snapshotName}, invalid coordinate bounds: ${coordString}. top must be < bottom` 
         };
     }
     
     if (left >= right) {
         return { 
             valid: false, 
-            error: `for snapshot ${snapshotName} viewport ${viewportString}, invalid coordinate bounds: ${coordString}. left must be < right` 
+            error: `for snapshot ${snapshotName}, invalid coordinate bounds: ${coordString}. left must be < right` 
         };
     }
     
-    if (bottom > viewportSize.height) {
+    if (bottom > pageHeight) {
         return { 
             valid: false, 
-            error: `for snapshot ${snapshotName} viewport ${viewportString}, coordinates exceed viewport bounds: ${coordString}. bottom (${bottom}) exceeds viewport height (${viewportSize.height})` 
+            error: `for snapshot ${snapshotName}, coordinates exceed viewport bounds: ${coordString}. bottom (${bottom}) exceeds viewport height (${pageHeight})` 
         };
     }
     
-    if (right > viewportSize.width) {
+    if (right > pageWidth) {
         return { 
             valid: false, 
-            error: `for snapshot ${snapshotName} viewport ${viewportString}, coordinates exceed viewport bounds: ${coordString}. right (${right}) exceeds viewport width (${viewportSize.width})` 
+            error: `for snapshot ${snapshotName}, coordinates exceed viewport bounds: ${coordString}. right (${right}) exceeds viewport width (${pageWidth})` 
         };
     }
     

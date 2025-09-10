@@ -671,14 +671,21 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
             for (const selector of selectors) {
                 if (selector.startsWith('coordinates=')) {
                     const coordString = selector.replace('coordinates=', '');
-                    const viewportSize = await page.viewportSize();
-                    
-                    if (!viewportSize) {
-                        optionWarnings.add(`for snapshot ${snapshot.name} viewport ${viewportString}, unable to get viewport size for coordinate validation`);
-                        continue;
+                    let pageHeight = height;
+                    if (viewport.height) {
+                      pageHeight = viewport.height;
                     }
-                    
-                    const validation = validateCoordinates(coordString, viewportSize, snapshot.name, viewportString);
+                    const validation = validateCoordinates(
+                      coordString,
+                      pageHeight,
+                      viewport.width,
+                      snapshot.name
+                    );
+
+
+                    if(renderViewports.length > 1){
+                        optionWarnings.add(`for snapshot ${snapshot.name}, coordinates may not be accurate for multiple viewports`);
+                    }
 
                     
                     if (!validation.valid) {
