@@ -132,6 +132,8 @@ export default (options: Record<string, string>): Context => {
             requestHeaders: config.requestHeaders || {},
             allowDuplicateSnapshotNames: allowDuplicateSnapshotNames,
             useLambdaInternal: useLambdaInternal,
+            approvalThreshold: config.approvalThreshold,
+            rejectionThreshold: config.rejectionThreshold,
         },
         uploadFilePath: '',
         webStaticConfig: [],

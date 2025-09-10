@@ -38,6 +38,8 @@ export interface Context {
         requestHeaders?: Array<Record<string, string>>;
         allowDuplicateSnapshotNames?: boolean;
         useLambdaInternal?: boolean;
+        approvalThreshold?: number;
+        rejectionThreshold?: number;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -148,9 +150,11 @@ export interface Snapshot {
         },
         loadDomContent?: boolean;
         ignoreType?: string[],
-        sessionId?: string
-        sync?: boolean;
-        contextId?: string;
+        sessionId?: string,
+        sync?: boolean,
+        contextId?: string,
+        approvalThreshold?: number,
+        rejectionThreshold?: number
     }
 }
 
