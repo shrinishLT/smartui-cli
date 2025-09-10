@@ -513,6 +513,14 @@ const SnapshotSchema: JSONSchemaType<Snapshot> = {
                 timeout: {
                     type: "number",
                     errorMessage: "Invalid snapshot options; timeout must be a number"
+                },
+                approvalThreshold: {
+                    type: "number",
+                    errorMessage: "Invalid snapshot options; approvalThreshold must be a number"
+                },
+                rejectionThreshold: {
+                    type: "number",
+                    errorMessage: "Invalid snapshot options; rejectionThreshold must be a number"
                 }
             },
             additionalProperties: false
