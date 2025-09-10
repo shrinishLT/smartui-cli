@@ -14,6 +14,18 @@ export default class httpClient {
     username: string;
     accessKey: string;
 
+    private handleHttpError(error: any, log: Logger): never {
+        if (error && error.response) {
+            log.debug(`http response error: ${JSON.stringify({
+                status: error.response.status,
+                body: error.response.data
+            })}`);
+            throw new Error(error.response.data?.message || error.response.data || `HTTP ${error.response.status} error`);
+        }
+        log.debug(`http request failed: ${error.message}`);
+        throw new Error(error.message);
+    }
+
     constructor({ SMARTUI_CLIENT_API_URL, PROJECT_TOKEN, PROJECT_NAME, LT_USERNAME, LT_ACCESS_KEY, SMARTUI_API_PROXY, SMARTUI_API_SKIP_CERTIFICATES }: Env) {
         this.projectToken = PROJECT_TOKEN || '';
         this.projectName = PROJECT_NAME || '';
@@ -82,6 +94,8 @@ export default class httpClient {
                     }
 
                     // If we've reached max retries, reject with the error
+                    return Promise.reject(error);
+                } else {
                     return Promise.reject(error);
                 }
             }
@@ -644,4 +658,66 @@ export default class httpClient {
             }
         }, ctx.log);
     }
+
+    async uploadPdf(ctx: Context, form: FormData, buildName?: string): Promise<any> {
+        form.append('projectToken', this.projectToken);
+        if (ctx.build.name !== undefined && ctx.build.name !== '') {
+            form.append('buildName', buildName);
+        }
+
+        try {
+            const response = await this.axiosInstance.request({
+                url: ctx.env.SMARTUI_UPLOAD_URL + '/pdf/upload',
+                method: 'POST',
+                headers: form.getHeaders(),
+                data: form,
+            });
+
+            ctx.log.debug(`http response: ${JSON.stringify({
+                status: response.status,
+                headers: response.headers,
+                body: response.data
+            })}`);
+
+            return response.data;
+        } catch (error: any) {
+            this.handleHttpError(error, ctx.log);
+        }
+    }
+
+    async fetchPdfResults(ctx: Context): Promise<any> {
+        const params: Record<string, string> = {};
+
+        if (ctx.build.projectId) {
+            params.project_id = ctx.build.projectId;
+        } else {
+            throw new Error('Project ID not found to fetch PDF results');
+        }
+        params.build_id = ctx.build.id;
+
+        const auth = Buffer.from(`${this.username}:${this.accessKey}`).toString('base64');
+
+        try {
+            const response = await axios.request({
+                url: ctx.env.SMARTUI_UPLOAD_URL + '/smartui/2.0/build/screenshots',
+                method: 'GET',
+                params: params,
+                headers: {
+                    'accept': 'application/json',
+                    'Authorization': `Basic ${auth}`
+                }
+            });
+
+            ctx.log.debug(`http response: ${JSON.stringify({
+                status: response.status,
+                headers: response.headers,
+                body: response.data
+            })}`);
+
+            return response.data;
+        } catch (error: any) {
+            this.handleHttpError(error, ctx.log);
+        }
+    }
 }
+
