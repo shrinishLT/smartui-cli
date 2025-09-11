@@ -684,11 +684,14 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                     
                     if (!validation.valid) {
                         optionWarnings.add(validation.error!);
-                        continue;
                     }
 
                     if(renderViewports.length > 1){
                         optionWarnings.add(`for snapshot ${snapshot.name} viewport ${viewportString}, coordinates may not be accurate for multiple viewports`);
+                    }
+
+                    if(!validation.valid){
+                        continue;
                     }
                     
                     const coordinateElement = { 
