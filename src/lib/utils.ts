@@ -666,3 +666,69 @@ function getPageNumber(screenshotName: string): string {
     const parts = screenshotName.split('#');
     return parts.length > 1 ? parts[1] : '1';
 }
+
+export function validateCoordinates(
+    coordString: string, 
+    pageHeight: number,
+    pageWidth: number,
+    snapshotName: string
+): { valid: boolean, error?: string, coords?: { top: number, bottom: number, left: number, right: number } } {
+    
+    const coords = coordString.split(',').map(Number);
+    
+    if (coords.length !== 4) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName}, invalid coordinates format: ${coordString}. Expected: top,bottom,left,right` 
+        };
+    }
+    
+    const [top, bottom, left, right] = coords;
+    
+    if (coords.some(isNaN)) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName}, invalid coordinate values: ${coordString}. All values must be numbers` 
+        };
+    }
+    
+    if (top < 0 || left < 0 || bottom < 0 || right < 0) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName}, invalid coordinate bounds: ${coordString}. top,left,bottom,right must be >= 0` 
+        };
+    }
+    
+    if (top >= bottom) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName}, invalid coordinate bounds: ${coordString}. top must be < bottom` 
+        };
+    }
+    
+    if (left >= right) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName}, invalid coordinate bounds: ${coordString}. left must be < right` 
+        };
+    }
+    
+    if (bottom > pageHeight) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName}, coordinates exceed viewport bounds: ${coordString}. bottom (${bottom}) exceeds viewport height (${pageHeight})` 
+        };
+    }
+    
+    if (right > pageWidth) {
+        return { 
+            valid: false, 
+            error: `for snapshot ${snapshotName}, coordinates exceed viewport bounds: ${coordString}. right (${right}) exceeds viewport width (${pageWidth})` 
+        };
+    }
+    
+    return { 
+        valid: true, 
+        coords: { top, bottom, left, right } 
+    };
+}
