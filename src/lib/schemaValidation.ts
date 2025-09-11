@@ -266,6 +266,14 @@ const ConfigSchema = {
         useLambdaInternal: {
             type: "boolean",
             errorMessage: "Invalid config; useLambdaInternal must be true/false"
+        },
+        approvalThreshold: {
+            type: "number",
+            errorMessage: "Invalid config; approvalThreshold must be a number"
+        },
+        rejectionThreshold: {
+            type: "number",
+            errorMessage: "Invalid config; rejectionThreshold must be a number"
         }
     },
     anyOf: [
