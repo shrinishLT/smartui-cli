@@ -403,6 +403,12 @@ const SnapshotSchema: JSONSchemaType<Snapshot> = {
                             uniqueItems: true,
                             errorMessage: "Invalid snapshot options; ignoreDOM xpath array must have unique and non-empty items"
                         },
+                        coordinates: {
+                            type: "array",
+                            items: { type: "string", minLength: 1 },
+                            uniqueItems: true,
+                            errorMessage: "Invalid snapshot options; ignoreDOM coordinates array must have unique and non-empty items"
+                        }
                     }
                 },
                 selectDOM: {
@@ -432,6 +438,12 @@ const SnapshotSchema: JSONSchemaType<Snapshot> = {
                             uniqueItems: true,
                             errorMessage: "Invalid snapshot options; selectDOM xpath array must have unique and non-empty items"
                         },
+                        coordinates: {
+                            type: "array",
+                            items: { type: "string", minLength: 1 },
+                            uniqueItems: true,
+                            errorMessage: "Invalid snapshot options; selectDOM coordinates array must have unique and non-empty items"
+                        }
                     }
                 },
                 ignoreType: {
