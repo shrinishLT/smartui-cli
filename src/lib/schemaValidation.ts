@@ -536,11 +536,15 @@ const SnapshotSchema: JSONSchemaType<Snapshot> = {
                 },
                 approvalThreshold: {
                     type: "number",
-                    errorMessage: "Invalid snapshot options; approvalThreshold must be a number"
+                    minimum: 0,
+                    maximum: 100,
+                    errorMessage: "Invalid snapshot options; approvalThreshold must be a number between 0 and 100"
                 },
                 rejectionThreshold: {
                     type: "number",
-                    errorMessage: "Invalid snapshot options; rejectionThreshold must be a number"
+                    minimum: 0,
+                    maximum: 100,
+                    errorMessage: "Invalid snapshot options; rejectionThreshold must be a number between 0 and 100"
                 }
             },
             additionalProperties: false
