@@ -239,6 +239,11 @@ const ConfigSchema = {
                     type: "string",
                     errorMessage: "Invalid config; logFile should be a string value"
                 },
+                environment: {
+                    type: "string",
+                    enum: ["stage", "prod"],
+                    errorMessage: "Invalid config; environment should be a string value either stage or prod"
+                }
             },
             required: ["type"],
             additionalProperties: false
