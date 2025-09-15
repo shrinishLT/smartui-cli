@@ -25,6 +25,8 @@ export default (options: Record<string, string>): Context => {
     let buildNameObj: string;
     let allowDuplicateSnapshotNames: boolean = false;
     let useLambdaInternal: boolean = false;
+    let useExtendedViewport: boolean = false;
+    let loadDomContent: boolean = false;
     try {
         if (options.config) {
             config = JSON.parse(fs.readFileSync(options.config, 'utf-8'));
@@ -100,6 +102,12 @@ export default (options: Record<string, string>): Context => {
     if (config.useLambdaInternal) {
         useLambdaInternal = true;
     }
+    if (config.useExtendedViewport) {
+        useExtendedViewport = true;
+    }
+    if (config.loadDomContent) {
+        loadDomContent = true;
+    }
 
     //if config.waitForPageRender has value and if its less than 30000 then make it to 30000 default
     if (config.waitForPageRender && config.waitForPageRender < 30000) {
@@ -132,6 +140,8 @@ export default (options: Record<string, string>): Context => {
             requestHeaders: config.requestHeaders || {},
             allowDuplicateSnapshotNames: allowDuplicateSnapshotNames,
             useLambdaInternal: useLambdaInternal,
+            useExtendedViewport: useExtendedViewport,
+            loadDomContent: loadDomContent,
         },
         uploadFilePath: '',
         webStaticConfig: [],

@@ -38,6 +38,8 @@ export interface Context {
         requestHeaders?: Array<Record<string, string>>;
         allowDuplicateSnapshotNames?: boolean;
         useLambdaInternal?: boolean;
+        useExtendedViewport?: boolean;
+        loadDomContent?: boolean;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -153,6 +155,7 @@ export interface Snapshot {
         sessionId?: string
         sync?: boolean;
         contextId?: string;
+        useExtendedViewport?: boolean;
     }
 }
 
