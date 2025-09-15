@@ -269,10 +269,14 @@ const ConfigSchema = {
         },
         approvalThreshold: {
             type: "number",
+            minimum: 0,
+            maximum: 100,
             errorMessage: "Invalid config; approvalThreshold must be a number"
         },
         rejectionThreshold: {
             type: "number",
+            minimum: 0,
+            maximum: 100,
             errorMessage: "Invalid config; rejectionThreshold must be a number"
         }
     },
