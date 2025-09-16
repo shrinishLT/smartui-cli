@@ -53,7 +53,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				} else {
 					// If not cached, fetch from API and cache it
 					try {
-						let fetchedCapabilitiesResp = await ctx.client.getSmartUICapabilities(sessionId, ctx.config, ctx.git, ctx.log);
+						let fetchedCapabilitiesResp = await ctx.client.getSmartUICapabilities(sessionId, ctx.config, ctx.git, ctx.log, ctx.isStartExec);
 						capsBuildId = fetchedCapabilitiesResp?.buildId || ''
 						ctx.log.debug(`fetch caps for sessionId: ${sessionId} are ${JSON.stringify(fetchedCapabilitiesResp)}`)
 						if (capsBuildId) {
