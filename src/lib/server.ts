@@ -5,7 +5,7 @@ import { readFileSync, truncate } from 'fs'
 import { Context } from '../types.js'
 import { validateSnapshot } from './schemaValidation.js'
 import { pingIntervalId } from './utils.js';
-import { startPolling } from './utils.js';
+import { stopTunnelHelper } from './utils.js';
 
 const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMessage, ServerResponse>> => {
@@ -59,7 +59,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				} else {
 					// If not cached, fetch from API and cache it
 					try {
-						let fetchedCapabilitiesResp = await ctx.client.getSmartUICapabilities(sessionId, ctx.config, ctx.git, ctx.log);
+						let fetchedCapabilitiesResp = await ctx.client.getSmartUICapabilities(sessionId, ctx.config, ctx.git, ctx.log, ctx.isStartExec);
 						capsBuildId = fetchedCapabilitiesResp?.buildId || ''
 						ctx.log.debug(`fetch caps for sessionId: ${sessionId} are ${JSON.stringify(fetchedCapabilitiesResp)}`)
 						if (capsBuildId) {
@@ -157,6 +157,11 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				}
 			}
 
+			//Handle Tunnel closure
+			if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+				await stopTunnelHelper(ctx)
+			}
+
 			await ctx.browser?.close();
 			if (ctx.server){
 				ctx.server.close();
@@ -174,7 +179,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			replyCode = 500;
 			replyBody = { error: { message: error.message } };
 		}
-	
+		
 		// Step 5: Return the response
 		return reply.code(replyCode).send(replyBody);
 	});

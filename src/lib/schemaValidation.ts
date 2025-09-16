@@ -239,6 +239,11 @@ const ConfigSchema = {
                     type: "string",
                     errorMessage: "Invalid config; logFile should be a string value"
                 },
+                environment: {
+                    type: "string",
+                    enum: ["stage", "prod"],
+                    errorMessage: "Invalid config; environment should be a string value either stage or prod"
+                }
             },
             required: ["type"],
             additionalProperties: false
@@ -266,6 +271,14 @@ const ConfigSchema = {
         useLambdaInternal: {
             type: "boolean",
             errorMessage: "Invalid config; useLambdaInternal must be true/false"
+        },
+        useExtendedViewport: {
+            type: "boolean",
+            errorMessage: "Invalid config; useExtendedViewport must be true/false"
+        },
+        loadDomContent: {
+            type: "boolean",
+            errorMessage: "Invalid config; loadDomContent must be true/false"
         },
         approvalThreshold: {
             type: "number",
@@ -537,6 +550,10 @@ const SnapshotSchema: JSONSchemaType<Snapshot> = {
                 timeout: {
                     type: "number",
                     errorMessage: "Invalid snapshot options; timeout must be a number"
+                },
+                useExtendedViewport: {
+                    type: "boolean",
+                    errorMessage: "Invalid snapshot options; useExtendedViewport must be a boolean"
                 },
                 approvalThreshold: {
                     type: "number",

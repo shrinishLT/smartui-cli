@@ -38,6 +38,8 @@ export interface Context {
         requestHeaders?: Array<Record<string, string>>;
         allowDuplicateSnapshotNames?: boolean;
         useLambdaInternal?: boolean;
+        useExtendedViewport?: boolean;
+        loadDomContent?: boolean;
         approvalThreshold?: number;
         rejectionThreshold?: number;
     };
@@ -152,11 +154,12 @@ export interface Snapshot {
         },
         loadDomContent?: boolean;
         ignoreType?: string[],
-        sessionId?: string,
-        sync?: boolean,
-        contextId?: string,
-        approvalThreshold?: number,
-        rejectionThreshold?: number
+        sessionId?: string
+        sync?: boolean;
+        contextId?: string;
+        useExtendedViewport?: boolean;
+        approvalThreshold?: number;
+        rejectionThreshold?: number;
     }
 }
 
@@ -236,6 +239,7 @@ export interface tunnelConfig {
     dir: string;
     v: boolean;
     logFile: string;
+    environment:string;
 }
 
 export interface FigmaWebConfig {
