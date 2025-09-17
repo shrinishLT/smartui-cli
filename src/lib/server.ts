@@ -38,6 +38,12 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 		try {
 			let { snapshot, testType } = request.body;
 			if (!validateSnapshot(snapshot)) throw new Error(validateSnapshot.errors[0].message);
+
+			if(snapshot?.options?.approvalThreshold !== undefined && snapshot?.options?.rejectionThreshold !== undefined) {
+				if(snapshot?.options?.rejectionThreshold <= snapshot?.options?.approvalThreshold) {
+					throw new Error(`Invalid snapshot options; rejectionThreshold (${snapshot.options.rejectionThreshold}) must be greater than approvalThreshold (${snapshot.options.approvalThreshold})`);
+				}
+			}
 		
 			// Fetch sessionId from snapshot options if present
 			const sessionId = snapshot?.options?.sessionId;
