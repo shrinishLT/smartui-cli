@@ -46,7 +46,9 @@ export async function prepareSnapshot(snapshot: Snapshot, ctx: Context): Promise
         if (options.loadDomContent) {
             processedOptions.loadDomContent = true;
         }
-
+        if (options.useExtendedViewport) {
+            processedOptions.useExtendedViewport = true;
+        }
         if (options.sessionId) {
             const sessionId = options.sessionId;
             processedOptions.sessionId = sessionId
@@ -143,6 +145,13 @@ export async function prepareSnapshot(snapshot: Snapshot, ctx: Context): Promise
             processedOptions.tunnelAddress = tunnelAddress;
             ctx.log.debug(`Tunnel address added to processedOptions: ${tunnelAddress}`);
         }
+    }
+
+    if (ctx.config.loadDomContent) {
+        processedOptions.loadDomContent = true;
+    }
+    if (ctx.config.useExtendedViewport) {
+        processedOptions.useExtendedViewport = true;
     }
 
     processedOptions.allowedAssets = ctx.config.allowedAssets;
@@ -520,6 +529,13 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
             processedOptions.tunnelAddress = tunnelAddress;
             ctx.log.debug(`Tunnel address added to processedOptions: ${tunnelAddress}`);
         }
+    }
+
+    if (ctx.config.loadDomContent) {
+        processedOptions.loadDomContent = true;
+    }
+    if (ctx.config.useExtendedViewport) {
+        processedOptions.useExtendedViewport = true;
     }
 
     // process for every viewport
