@@ -54,28 +54,15 @@ command
 
         try {
             await tasks.run(ctx);
-            if (ctx.build && ctx.build.id) {
+            if (ctx.build && ctx.build.id && !ctx.autoTunnelStarted) {
                 startPingPolling(ctx);
             }
             if (ctx.options.fetchResults && ctx.build && ctx.build.id) {
                 startPolling(ctx, '', false, '')
             }
 
-            // await ctx.client.getScreenshotData("567890", false, ctx.log, "755#a5ac6a67-289a-427d-b004-7dfff6c3484b#fanniemae-stage", 'smartui-bbf5b47005');
-
     
         } catch (error) {
-            // Log the error in a human-readable format
-            // ctx.log.debug(util.inspect(error, { showHidden: false, depth: null }));
-                
-            // console.log(`Json Error: ${JSON.stringify(error, null, 2)}`);
-            // if (error?.message.includes('ENOTFOUND')) {
-            //     ctx.log.error('Error: Network error occurred while fetching build status while polling. Please check your connection and try again.');
-            // } else {
-            //     // Log the error in a human-readable format
-            //     ctx.log.debug(util.inspect(error, { showHidden: false, depth: null }));
-            //     ctx.log.error(`Error fetching build status while polling: ${JSON.stringify(error)}`);
-            // }
             console.error('Error during server execution:', error);
             process.exit(1);
         }
