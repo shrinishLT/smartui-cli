@@ -4,8 +4,7 @@ import fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { readFileSync, truncate } from 'fs'
 import { Context } from '../types.js'
 import { validateSnapshot } from './schemaValidation.js'
-import { pingIntervalId } from './utils.js';
-import { stopTunnelHelper } from './utils.js';
+import { pingIntervalId, startPollingForTunnel, stopTunnelHelper, isTunnelPolling } from './utils.js';
 
 const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMessage, ServerResponse>> => {
@@ -106,6 +105,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 		let replyCode: number;
 		let replyBody: Record<string, any>;
 		try {
+			ctx.log.info('Received stop command. Finalizing build ...');
 			if(ctx.config.delayedUpload){
 				ctx.log.debug("started after processing because of delayedUpload")
 				ctx.snapshotQueue?.startProcessingfunc()
@@ -118,6 +118,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 					}
 				}, 1000);
 			})
+            let buildUrls = `build url: ${ctx.build.url}\n`;
 
 			for (const [sessionId, capabilities] of ctx.sessionCapabilitiesMap.entries()) {
                 try {
@@ -126,9 +127,12 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
                     const totalSnapshots = capabilities?.snapshotCount || 0;
                     const sessionBuildUrl = capabilities?.buildURL || '';
                     const testId = capabilities?.id || '';
-
+					ctx.log.debug(`Capabilities for sessionId ${sessionId}: ${JSON.stringify(capabilities)}`)
                     if (buildId && projectToken) {
                         await ctx.client.finalizeBuildForCapsWithToken(buildId, totalSnapshots, projectToken, ctx.log);
+						if (ctx.autoTunnelStarted) {
+							await startPollingForTunnel(ctx, buildId, false, projectToken, capabilities?.buildName);
+						}
                     }
 
                     if (testId && buildId) {
@@ -151,10 +155,15 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				}
 			}
 
-			//Handle Tunnel closure
-			if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
-				await stopTunnelHelper(ctx)
-			}
+
+			//If Tunnel Details are present, start polling for tunnel status 
+			if (ctx.tunnelDetails && ctx.tunnelDetails.tunnelHost != "" && ctx.build?.id) {
+				await startPollingForTunnel(ctx, ctx.build.id, false, '', '');
+			} 
+			//stop the tunnel if it was auto started and no tunnel polling is active
+			if (ctx.autoTunnelStarted && isTunnelPolling === null) {
+                await stopTunnelHelper(ctx);
+            }
 
 			await ctx.browser?.close();
 			if (ctx.server){
@@ -174,6 +183,8 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			replyBody = { error: { message: error.message } };
 		}
 		
+		ctx.log.info('Stop command processed. Tearing down server.');
+
 		// Step 5: Return the response
 		return reply.code(replyCode).send(replyBody);
 	});

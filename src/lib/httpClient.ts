@@ -3,7 +3,7 @@ import FormData from 'form-data';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Env, Snapshot, ProcessedSnapshot, Git, Build, Context, DiscoveryErrors } from '../types.js';
 import constants from './constants.js';
-import type { Logger } from 'winston'
+import { type Logger } from 'winston'
 import pkgJSON from './../../package.json'
 import https from 'https';
 
@@ -77,7 +77,7 @@ export default class httpClient {
             (response) => response,
             async (error) => {
                 const { config } = error;
-                if (config && config.url === '/screenshot' && config.method === 'post') {
+                if (config && config.url === '/screenshot' && config.method === 'post' && error?.response?.status !== 401) {
                     // Set default retry count and delay if not already defined
                     if (!config.retryCount) {
                         config.retryCount = 0;
@@ -242,11 +242,12 @@ export default class httpClient {
         }, log)
     }
 
-    getScreenshotData(buildId: string, baseline: boolean, log: Logger, projectToken: string) {
+    getScreenshotData(buildId: string, baseline: boolean, log: Logger, projectToken: string, buildName: string) {
+        log.debug(`Fetching screenshot data for buildId: ${buildId}  having  buildName: ${buildName} with baseline: ${baseline}`);
         return this.request({
             url: '/screenshot',
             method: 'GET',
-            params: { buildId, baseline },
+            params: { buildId, baseline, buildName },
             headers: {projectToken: projectToken}
         }, log);
     }

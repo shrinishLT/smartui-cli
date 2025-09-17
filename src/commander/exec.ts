@@ -40,6 +40,7 @@ command
         ctx.args.execCommand = execCommand
         ctx.snapshotQueue = new snapshotQueue(ctx)
         ctx.totalSnapshots = 0
+        ctx.sourceCommand = 'exec'
 
         let tasks = new Listr<Context>(
             [

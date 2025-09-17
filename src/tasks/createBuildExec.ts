@@ -2,7 +2,7 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import chalk from 'chalk';
 import { updateLogContext } from '../lib/logger.js';
-import { startTunnelBinary, startPollingForTunnel, stopTunnelHelper, startPingPolling } from '../lib/utils.js';
+import { stopTunnelHelper, startPingPolling } from '../lib/utils.js';
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
@@ -42,16 +42,11 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 } else {
                     task.output = chalk.gray(`Empty PROJECT_TOKEN and PROJECT_NAME. Skipping Creation of Build!`)
                     task.title = 'Skipped SmartUI build creation'
-                    if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
-                        await stopTunnelHelper(ctx)
-                    }
                 }
 
                 if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
-                    if (ctx.build && ctx.build.id) {
-                        startPollingForTunnel(ctx, '', false, '');
-                    } else {
-                        startPingPolling(ctx, "tunnel-process");
+                    if (ctx.build && ctx.build.id && ctx.sourceCommand != "exec-start") {
+                        startPingPolling(ctx);
                     }
                 }
 
@@ -69,7 +64,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                         if (process.env.USE_REMOTE_DISCOVERY === undefined) {
                             ctx.env.USE_REMOTE_DISCOVERY = true;
                             process.env.USE_REMOTE_DISCOVERY = 'true';
-                            task.output += chalk.gray(`\n Using remote discovery by deafult for this build`);
+                            task.output += chalk.gray(`\n Using remote discovery by default for this build`);
                         }
                         ctx.log.debug(`USE_REMOTE_DISCOVERY is set to ${ctx.env.USE_REMOTE_DISCOVERY}`);
 
