@@ -44,7 +44,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                     task.title = 'Skipped SmartUI build creation'
                 }
 
-                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                if (ctx.autoTunnelStarted) {
                     if (ctx.build && ctx.build.id && ctx.sourceCommand != "exec-start") {
                         startPingPolling(ctx);
                     }
@@ -80,7 +80,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
             } catch (error: any) {
                 ctx.log.debug(error);
-                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                if (ctx.autoTunnelStarted) {
                     await stopTunnelHelper(ctx)
                 }
                 task.output = chalk.gray(error.message);

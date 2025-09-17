@@ -9,7 +9,6 @@ import createBuildExec from '../tasks/createBuildExec.js';
 import snapshotQueue from '../lib/snapshotQueue.js';
 import { startPolling, startPingPolling } from '../lib/utils.js';
 import startTunnel from '../tasks/startTunnel.js'
-const util = require('util');
 
 const command = new Command();
 
@@ -61,7 +60,6 @@ command
                 startPolling(ctx, '', false, '')
             }
 
-    
         } catch (error) {
             console.error('Error during server execution:', error);
             process.exit(1);
