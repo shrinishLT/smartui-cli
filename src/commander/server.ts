@@ -28,6 +28,7 @@ command
         ctx.snapshotQueue = new snapshotQueue(ctx);
         ctx.totalSnapshots = 0
         ctx.isStartExec = true
+        ctx.sourceCommand = 'exec-start'
         
         let tasks = new Listr<Context>(
             [
@@ -52,13 +53,13 @@ command
 
         try {
             await tasks.run(ctx);
-            if (ctx.build && ctx.build.id) {
-                startPingPolling(ctx, 'exec-start');
+            if (ctx.build && ctx.build.id && !ctx.autoTunnelStarted) {
+                startPingPolling(ctx);
             }
             if (ctx.options.fetchResults && ctx.build && ctx.build.id) {
                 startPolling(ctx, '', false, '')
             }
-    
+
         } catch (error) {
             console.error('Error during server execution:', error);
             process.exit(1);

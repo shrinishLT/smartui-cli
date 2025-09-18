@@ -92,6 +92,8 @@ export interface Context {
     mergeByBranch?: boolean;
     mergeByBuild?: boolean;
     contextToSnapshotMap?: Map<string, number>;
+    sourceCommand?: string;
+    autoTunnelStarted?: boolean;
 }
 
 export interface Env {

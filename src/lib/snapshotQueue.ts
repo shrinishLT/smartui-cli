@@ -380,7 +380,7 @@ export default class Queue {
                                     useKafkaFlow: resp.data.useKafkaFlow || false,
                                 }
                             } else {
-                                if (this.ctx.config.tunnel && this.ctx.config.tunnel?.type === 'auto') {
+                                if (this.ctx.autoTunnelStarted) {
                                     await stopTunnelHelper(this.ctx)
                                 }
                                 throw new Error('SmartUI capabilities are missing in env variables or in driver capabilities');
