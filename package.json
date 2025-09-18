@@ -1,6 +1,6 @@
 {
   "name": "@lambdatest/smartui-cli",
-  "version": "4.1.31",
+  "version": "4.1.32",
   "description": "A command line interface (CLI) to run SmartUI tests on LambdaTest",
   "files": [
     "dist/**/*"
@@ -48,6 +48,9 @@
     "uuid": "^11.0.3",
     "which": "^4.0.0",
     "winston": "^3.10.0"
+  },
+  "overrides": {
+    "simple-swizzle": "0.2.2"
   },
   "devDependencies": {
     "typescript": "^5.3.2"

@@ -7,6 +7,7 @@ import fs from 'fs';
 import { globalAgent } from 'http';
 import { promisify } from 'util'
 import { build } from 'tsup';
+const util = require('util'); // Import the util module
 
 var lambdaTunnel = require('@lambdatest/node-tunnel');
 const sleep = promisify(setTimeout);
@@ -248,9 +249,9 @@ export async function startPolling(ctx: Context, build_id: string, baseline: boo
         try {
             let resp;
             if (build_id) {
-                resp = await ctx.client.getScreenshotData(build_id, baseline, ctx.log, projectToken);
+                resp = await ctx.client.getScreenshotData(build_id, baseline, ctx.log, projectToken, '');
             } else if (ctx.build && ctx.build.id) {
-                resp = await ctx.client.getScreenshotData(ctx.build.id, ctx.build.baseline, ctx.log, '');
+                resp = await ctx.client.getScreenshotData(ctx.build.id, ctx.build.baseline, ctx.log, '', '');
             } else {
                 return;
             }
@@ -333,12 +334,13 @@ export async function startPingPolling(ctx: Context): Promise<void> {
         ctx.log.error(`Error during initial ping: ${error.message}`);
     }
 
+    let sourceCommand = ctx.sourceCommand? ctx.sourceCommand : '';
     // Start the polling interval
     pingIntervalId = setInterval(async () => {
         try {
-            ctx.log.debug('Sending ping to server...');
+            ctx.log.debug('Sending ping to server... '+ sourceCommand);
             await ctx.client.ping(ctx.build.id, ctx.log);
-            ctx.log.debug('Ping sent successfully.');
+            ctx.log.debug('Ping sent successfully. '+ sourceCommand);
         } catch (error: any) {
             ctx.log.error(`Error during ping polling: ${error.message}`);
         }
@@ -390,6 +392,11 @@ export async function startTunnelBinary(ctx: Context) {
         ctx.config.tunnel.tunnelName = randomTunnelName
     }
     
+    if (tunnelConfig?.environment) {
+        tunnelArguments.environment = tunnelConfig.environment
+    }
+
+
     ctx.log.debug(`tunnel config ${JSON.stringify(tunnelArguments)}`)
 
     if (ctx.config.tunnel?.type === 'auto') {
@@ -401,59 +408,61 @@ export async function startTunnelBinary(ctx: Context) {
     }
 }
 
-export async function startPollingForTunnel(ctx: Context, build_id: string, baseline: boolean, projectToken: string): Promise<void> {
+export let isTunnelPolling: NodeJS.Timeout | null = null;
+
+export async function startPollingForTunnel(ctx: Context, build_id: string, baseline: boolean, projectToken: string, buildName: string): Promise<void> {
+    if (isTunnelPolling) {
+        ctx.log.debug('Tunnel polling is already active. Skipping for build_id: ' + build_id);
+        return;
+    }
     const intervalId = setInterval(async () => {
         try {
             let resp;
             if (build_id) {
-                resp = await ctx.client.getScreenshotData(build_id, baseline, ctx.log, projectToken);
+                resp = await ctx.client.getScreenshotData(build_id, baseline, ctx.log, projectToken, buildName);
             } else if (ctx.build && ctx.build.id) {
-                resp = await ctx.client.getScreenshotData(ctx.build.id, ctx.build.baseline, ctx.log, '');
+                resp = await ctx.client.getScreenshotData(ctx.build.id, ctx.build.baseline, ctx.log, '', '');
             } else {
+                ctx.log.debug('No build information available for polling tunnel status.');
+                clearInterval(intervalId);
+                await stopTunnelHelper(ctx);
                 return;
             }
-
+            ctx.log.debug(' resp from polling for tunnel status: ' + JSON.stringify(resp)); 
             if (!resp.build) {
                 ctx.log.info("Error: Build data is null.");
                 clearInterval(intervalId);
-
-                const tunnelRunningStatus = await tunnelInstance.isRunning();
-                ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
-
-                const status = await tunnelInstance.stop();
-                ctx.log.debug('Tunnel is Stopped ? ' + status);
-                
+                await stopTunnelHelper(ctx);
                 return;
             }
 
             if (resp.build.build_status_ind === constants.BUILD_COMPLETE || resp.build.build_status_ind === constants.BUILD_ERROR) {
                 clearInterval(intervalId);
-
-                const tunnelRunningStatus = await tunnelInstance.isRunning();
-                ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
-
-                const status = await tunnelInstance.stop();
-                ctx.log.debug('Tunnel is Stopped ? ' + status);
-
+                await stopTunnelHelper(ctx);
+                return;
             }
         } catch (error: any) {
-            if (error.message.includes('ENOTFOUND')) {
+            if (error?.message.includes('ENOTFOUND')) {
                 ctx.log.error('Error: Network error occurred while fetching build status while polling. Please check your connection and try again.');
                 clearInterval(intervalId);
             } else {
-                ctx.log.error(`Error fetching build status while polling: ${error.message}`);
+                // Log the error in a human-readable format
+                ctx.log.debug(util.inspect(error, { showHidden: false, depth: null }));
+                ctx.log.error(`Error fetching build status while polling: ${JSON.stringify(error)}`);
             }
             clearInterval(intervalId);
         }
     }, 5000);
+    isTunnelPolling = intervalId;
 }
 
 export async function stopTunnelHelper(ctx: Context) {
+    ctx.log.debug('stop-tunnel:: Stopping the tunnel now');
     const tunnelRunningStatus = await tunnelInstance.isRunning();
-    ctx.log.debug('Running status of tunnel before stopping ? ' + tunnelRunningStatus);
+    ctx.log.debug('stop-tunnel:: Running status of tunnel before stopping ? ' + tunnelRunningStatus);
 
     const status = await tunnelInstance.stop();
-    ctx.log.debug('Tunnel is Stopped ? ' + status);
+    ctx.log.debug('stop-tunnel:: Tunnel is Stopped ? ' + status);
 } 
 
 /**

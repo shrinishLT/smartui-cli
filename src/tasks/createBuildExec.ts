@@ -2,7 +2,7 @@ import { ListrTask, ListrRendererFactory } from 'listr2';
 import { Context } from '../types.js'
 import chalk from 'chalk';
 import { updateLogContext } from '../lib/logger.js';
-import { startTunnelBinary, startPollingForTunnel, stopTunnelHelper, startPingPolling } from '../lib/utils.js';
+import { stopTunnelHelper, startPingPolling } from '../lib/utils.js';
 
 export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRendererFactory>  =>  {
     return {
@@ -36,18 +36,17 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                     }
                     task.output = chalk.gray(`build id: ${resp.data.buildId}`);
                     task.title = 'SmartUI build created'
+                    if (ctx.env.USE_REMOTE_DISCOVERY){
+                        task.output += chalk.gray(`\n Using remote discovery for this build`);
+                    }
                 } else {
                     task.output = chalk.gray(`Empty PROJECT_TOKEN and PROJECT_NAME. Skipping Creation of Build!`)
                     task.title = 'Skipped SmartUI build creation'
-                    if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
-                        await stopTunnelHelper(ctx)
-                    }
                 }
 
-                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
-                    startPingPolling(ctx);
-                    if (ctx.build && ctx.build.id) {
-                        startPollingForTunnel(ctx, '', false, '');
+                if (ctx.autoTunnelStarted) {
+                    if (ctx.build && ctx.build.id && ctx.sourceCommand != "exec-start") {
+                        startPingPolling(ctx);
                     }
                 }
 
@@ -61,6 +60,14 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                             tunnelName: tunnelResp.data.tunnel_name
                         }
                         ctx.log.debug(`Tunnel Details: ${JSON.stringify(ctx.tunnelDetails)}`)
+                        //USE_REMOTE_DISCOVERY as default if Tunnel is true 
+                        if (process.env.USE_REMOTE_DISCOVERY === undefined) {
+                            ctx.env.USE_REMOTE_DISCOVERY = true;
+                            process.env.USE_REMOTE_DISCOVERY = 'true';
+                            task.output += chalk.gray(`\n Using remote discovery by default for this build`);
+                        }
+                        ctx.log.debug(`USE_REMOTE_DISCOVERY is set to ${ctx.env.USE_REMOTE_DISCOVERY}`);
+
                     } else if (tunnelResp && tunnelResp.error) {
                         if (tunnelResp.error.message) {
                             if (tunnelResp.error.code && tunnelResp.error.code === 400) {
@@ -73,7 +80,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
             } catch (error: any) {
                 ctx.log.debug(error);
-                if (ctx.config.tunnel && ctx.config.tunnel?.type === 'auto') {
+                if (ctx.autoTunnelStarted) {
                     await stopTunnelHelper(ctx)
                 }
                 task.output = chalk.gray(error.message);

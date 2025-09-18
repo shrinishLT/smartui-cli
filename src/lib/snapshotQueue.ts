@@ -380,7 +380,7 @@ export default class Queue {
                                     useKafkaFlow: resp.data.useKafkaFlow || false,
                                 }
                             } else {
-                                if (this.ctx.config.tunnel && this.ctx.config.tunnel?.type === 'auto') {
+                                if (this.ctx.autoTunnelStarted) {
                                     await stopTunnelHelper(this.ctx)
                                 }
                                 throw new Error('SmartUI capabilities are missing in env variables or in driver capabilities');
@@ -427,7 +427,9 @@ export default class Queue {
                                 }
                                 this.processNext();
                             } else {
-                                await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors,calculateVariantCountFromSnapshot(processedSnapshot, this.ctx.config),snapshot?.options?.sync);
+                                let approvalThreshold = snapshot?.options?.approvalThreshold || this.ctx.config.approvalThreshold;
+                                let rejectionThreshold = snapshot?.options?.rejectionThreshold || this.ctx.config.rejectionThreshold;
+                                await this.ctx.client.processSnapshot(this.ctx, processedSnapshot, snapshotUuid, discoveryErrors,calculateVariantCountFromSnapshot(processedSnapshot, this.ctx.config),snapshot?.options?.sync, approvalThreshold, rejectionThreshold);
                                 if(snapshot?.options?.contextId && this.ctx.contextToSnapshotMap?.has(snapshot.options.contextId)){
                                     this.ctx.contextToSnapshotMap.set(snapshot.options.contextId, 1);
                                 }

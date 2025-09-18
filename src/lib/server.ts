@@ -4,8 +4,7 @@ import fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { readFileSync, truncate } from 'fs'
 import { Context } from '../types.js'
 import { validateSnapshot } from './schemaValidation.js'
-import { pingIntervalId } from './utils.js';
-import { startPolling } from './utils.js';
+import { pingIntervalId, startPollingForTunnel, stopTunnelHelper, isTunnelPolling } from './utils.js';
 
 const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMessage, ServerResponse>> => {
@@ -38,6 +37,12 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 		try {
 			let { snapshot, testType } = request.body;
 			if (!validateSnapshot(snapshot)) throw new Error(validateSnapshot.errors[0].message);
+
+			if(snapshot?.options?.approvalThreshold !== undefined && snapshot?.options?.rejectionThreshold !== undefined) {
+				if(snapshot?.options?.rejectionThreshold <= snapshot?.options?.approvalThreshold) {
+					throw new Error(`Invalid snapshot options; rejectionThreshold (${snapshot.options.rejectionThreshold}) must be greater than approvalThreshold (${snapshot.options.approvalThreshold})`);
+				}
+			}
 		
 			// Fetch sessionId from snapshot options if present
 			const sessionId = snapshot?.options?.sessionId;
@@ -53,7 +58,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				} else {
 					// If not cached, fetch from API and cache it
 					try {
-						let fetchedCapabilitiesResp = await ctx.client.getSmartUICapabilities(sessionId, ctx.config, ctx.git, ctx.log);
+						let fetchedCapabilitiesResp = await ctx.client.getSmartUICapabilities(sessionId, ctx.config, ctx.git, ctx.log, ctx.isStartExec);
 						capsBuildId = fetchedCapabilitiesResp?.buildId || ''
 						ctx.log.debug(`fetch caps for sessionId: ${sessionId} are ${JSON.stringify(fetchedCapabilitiesResp)}`)
 						if (capsBuildId) {
@@ -106,6 +111,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 		let replyCode: number;
 		let replyBody: Record<string, any>;
 		try {
+			ctx.log.info('Received stop command. Finalizing build ...');
 			if(ctx.config.delayedUpload){
 				ctx.log.debug("started after processing because of delayedUpload")
 				ctx.snapshotQueue?.startProcessingfunc()
@@ -118,6 +124,7 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 					}
 				}, 1000);
 			})
+            let buildUrls = `build url: ${ctx.build.url}\n`;
 
 			for (const [sessionId, capabilities] of ctx.sessionCapabilitiesMap.entries()) {
                 try {
@@ -126,9 +133,12 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
                     const totalSnapshots = capabilities?.snapshotCount || 0;
                     const sessionBuildUrl = capabilities?.buildURL || '';
                     const testId = capabilities?.id || '';
-
+					ctx.log.debug(`Capabilities for sessionId ${sessionId}: ${JSON.stringify(capabilities)}`)
                     if (buildId && projectToken) {
                         await ctx.client.finalizeBuildForCapsWithToken(buildId, totalSnapshots, projectToken, ctx.log);
+						if (ctx.autoTunnelStarted) {
+							await startPollingForTunnel(ctx, buildId, false, projectToken, capabilities?.buildName);
+						}
                     }
 
                     if (testId && buildId) {
@@ -151,6 +161,16 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 				}
 			}
 
+
+			//If Tunnel Details are present, start polling for tunnel status 
+			if (ctx.tunnelDetails && ctx.tunnelDetails.tunnelHost != "" && ctx.build?.id) {
+				await startPollingForTunnel(ctx, ctx.build.id, false, '', '');
+			} 
+			//stop the tunnel if it was auto started and no tunnel polling is active
+			if (ctx.autoTunnelStarted && isTunnelPolling === null) {
+                await stopTunnelHelper(ctx);
+            }
+
 			await ctx.browser?.close();
 			if (ctx.server){
 				ctx.server.close();
@@ -168,7 +188,9 @@ export default async (ctx: Context): Promise<FastifyInstance<Server, IncomingMes
 			replyCode = 500;
 			replyBody = { error: { message: error.message } };
 		}
-	
+		
+		ctx.log.info('Stop command processed. Tearing down server.');
+
 		// Step 5: Return the response
 		return reply.code(replyCode).send(replyBody);
 	});
