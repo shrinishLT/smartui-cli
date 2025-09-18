@@ -3,7 +3,7 @@ import FormData from 'form-data';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Env, Snapshot, ProcessedSnapshot, Git, Build, Context, DiscoveryErrors } from '../types.js';
 import constants from './constants.js';
-import { type Logger } from 'winston'
+import type { Logger } from 'winston'
 import pkgJSON from './../../package.json'
 import https from 'https';
 
