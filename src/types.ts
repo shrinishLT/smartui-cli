@@ -38,6 +38,7 @@ export interface Context {
         requestHeaders?: Array<Record<string, string>>;
         allowDuplicateSnapshotNames?: boolean;
         useLambdaInternal?: boolean;
+        useRemoteDiscovery?: boolean;
         useExtendedViewport?: boolean;
         loadDomContent?: boolean;
         approvalThreshold?: number;

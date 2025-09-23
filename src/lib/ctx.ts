@@ -25,6 +25,7 @@ export default (options: Record<string, string>): Context => {
     let buildNameObj: string;
     let allowDuplicateSnapshotNames: boolean = false;
     let useLambdaInternal: boolean = false;
+    let useRemoteDiscovery: boolean = false;
     let useExtendedViewport: boolean = false;
     let loadDomContent: boolean = false;
     try {
@@ -108,6 +109,9 @@ export default (options: Record<string, string>): Context => {
     if (config.useLambdaInternal) {
         useLambdaInternal = true;
     }
+    if (config.useRemoteDiscovery) {
+        useRemoteDiscovery = true;
+    }
     if (config.useExtendedViewport) {
         useExtendedViewport = true;
     }
@@ -146,6 +150,7 @@ export default (options: Record<string, string>): Context => {
             requestHeaders: config.requestHeaders || {},
             allowDuplicateSnapshotNames: allowDuplicateSnapshotNames,
             useLambdaInternal: useLambdaInternal,
+            useRemoteDiscovery: useRemoteDiscovery,
             useExtendedViewport: useExtendedViewport,
             loadDomContent: loadDomContent,
             approvalThreshold: config.approvalThreshold,
