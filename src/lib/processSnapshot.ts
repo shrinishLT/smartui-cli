@@ -648,14 +648,7 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
         }
 
         // snapshot options
-        if (processedOptions.element) {
-            let l = await page.locator(processedOptions.element).all()
-            if (l.length === 0) {
-                throw new Error(`for snapshot ${snapshot.name} viewport ${viewportString}, no element found for selector ${processedOptions.element}`);
-            } else if (l.length > 1) {
-                throw new Error(`for snapshot ${snapshot.name} viewport ${viewportString}, multiple elements found for selector ${processedOptions.element}`);
-            }
-        } else if (selectors.length) {
+        if (selectors.length) {
             let height = 0;
             height = await page.evaluate(() => {
                 const DEFAULT_HEIGHT = 16384;
@@ -786,32 +779,14 @@ export default async function processSnapshot(snapshot: Snapshot, ctx: Context):
                                 elements = Array.from(document.querySelectorAll(selectorValue));
                             }
 
-                            let boxes = [];
-
-                            elements.forEach((element) => {
-                                const boundingBox = element.getBoundingClientRect();
-                                if (boundingBox && boundingBox.width > 0 && boundingBox.height > 0) {
-                                    const box = {
-                                        top: boundingBox.top + window.scrollY,
-                                        left: boundingBox.left + window.scrollX,
-                                        right: boundingBox.left + window.scrollX + boundingBox.width,
-                                        bottom: boundingBox.top + window.scrollY + boundingBox.height
-                                    };
-
-                                    if (box.bottom <= pageHeight && box.top >= 0) {
-                                        boxes.push(box);
-                                    }
-                                }
-                            });
-
-                            return boxes;
+                            return elements;
 
                         } catch (error) {
                         }
 
                     }, { selectorValue, isXPath });
 
-                    if (boxes && boxes.length > 1) {
+                    if (boxes && boxes.length >= 1) {
                         processedOptions[ignoreOrSelectBoxes][viewportString].push(...boxes);
                     } else {
                         optionWarnings.add(`for snapshot ${snapshot.name} viewport ${viewportString}, no element found for selector ${selector}`);
