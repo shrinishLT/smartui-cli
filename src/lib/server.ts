@@ -6,6 +6,7 @@ import { Context } from '../types.js'
 import { Logger } from 'winston'
 import { validateSnapshot } from './schemaValidation.js'
 import { pingIntervalId, startPollingForTunnel, stopTunnelHelper, isTunnelPolling } from './utils.js';
+import constants from './constants.js';
 var fp = require("find-free-port")
 
 const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
@@ -13,8 +14,6 @@ const uploadDomToS3ViaEnv = process.env.USE_LAMBDA_INTERNAL || false;
 // Helper function to find an available port
 async function findAvailablePort(server: FastifyInstance, startPort: number, log: Logger): Promise<number> {
 	let currentPort = startPort;
-	let attempts = 0;
-	let maxAttempts = 10;
 
 	// If the default port gives error, use find-free-port with range 49100-60000
 	try {
@@ -25,7 +24,7 @@ async function findAvailablePort(server: FastifyInstance, startPort: number, log
 			log.debug(`Port ${currentPort} is in use, finding available port in range 49100-60000`);
 			
 			// Use find-free-port to get an available port in the specified range
-			const availablePorts = await fp(49100, 60000);
+			const availablePorts = await fp(constants.MIN_PORT_RANGE, constants.MAX_PORT_RANGE);
 			if (availablePorts.length > 0) {
 				const freePort = availablePorts[0];
 				await server.listen({ port: freePort });
