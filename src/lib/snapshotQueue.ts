@@ -327,7 +327,7 @@ export default class Queue {
                     }
 
                     let processedSnapshot, warnings, discoveryErrors;
-                    if (this.ctx.env.USE_REMOTE_DISCOVERY) {
+                    if (this.ctx.env.USE_REMOTE_DISCOVERY || this.ctx.config.useRemoteDiscovery) {
                         this.ctx.log.debug(`Using remote discovery`);
                         let result = await prepareSnapshot(snapshot, this.ctx);
                         
