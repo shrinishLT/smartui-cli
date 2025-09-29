@@ -120,6 +120,8 @@ export interface Env {
     SMARTUI_API_SKIP_CERTIFICATES: boolean;
     USE_REMOTE_DISCOVERY: boolean;
     SMART_GIT: boolean;
+    SHOW_RENDER_ERRORS: boolean;
+    SMARTUI_SSE_URL: string;
 }
 
 export interface Snapshot {
