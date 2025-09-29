@@ -887,6 +887,5 @@ export async function startSSEListener(ctx: Context) {
 
     } catch (error) {
         ctx.log.debug('Failed to start SSE listener:', error);
-        throw error;
     }
 }
