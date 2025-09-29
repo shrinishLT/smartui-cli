@@ -750,6 +750,7 @@ export function createBasicAuthToken(username: string, accessKey: string): strin
 export async function listenToSmartUISSE(
     baseURL: string,
     accessToken: string,
+    ctx: Context,
     onEvent?: (eventType: string, data: any) => void
 ): Promise<{ abort: () => void }> {
     const url = `${baseURL}/api/v1/sse/smartui`;
@@ -820,14 +821,14 @@ export async function listenToSmartUISSE(
                 }
             }
         } catch (streamError: any) {
-            console.error('SSE Streaming error:', streamError);
+            ctx.log.debug('SSE Streaming error:', streamError);
             onEvent?.('error', streamError);
         } finally {
             reader.releaseLock();
         }
 
     } catch (error) {
-        console.error('SSE Connection error:', error);
+        ctx.log.debug('SSE Connection error:', error);
         onEvent?.('error', error);
     }
 
@@ -850,6 +851,7 @@ export async function startSSEListener(ctx: Context) {
         currentConnection = await listenToSmartUISSE(
             ctx.env.SMARTUI_SSE_URL,
             basicAuthToken,
+            ctx,
             (eventType, data) => {
                 switch (eventType) {
                     case 'open':
@@ -864,11 +866,7 @@ export async function startSSEListener(ctx: Context) {
                         ctx.log.debug('Build completed');
                         console.log('Build completed');
                         currentConnection?.abort();
-                        if(errorCount > 0) {
-                            process.exit(1);
-                        }
-                        process.exit(0);
-                    
+                        break;
                     case 'DOTUIError':
                         if (data.buildId== ctx.build.id) {
                             errorCount++;
@@ -879,7 +877,7 @@ export async function startSSEListener(ctx: Context) {
                     case 'error':
                         ctx.log.debug('SSE Error occurred:', data);
                         currentConnection?.abort();
-                        process.exit(0);
+                        break;
                         
                 }
             }
