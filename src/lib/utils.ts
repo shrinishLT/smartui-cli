@@ -837,71 +837,56 @@ export async function listenToSmartUISSE(
 }
 
 export async function startSSEListener(ctx: Context) {
-    let retryCount = 0;
-    const maxRetries = 3;
     let currentConnection: { abort: () => void } | null = null;
     let errorCount = 0;
     
-    const connectWithRetry = async () => {
-        try {
-            ctx.log.debug(`Attempting SSE connection (attempt ${retryCount + 1}/${maxRetries})`);
-            const accessKey = ctx.env.LT_ACCESS_KEY;
-            const username = ctx.env.LT_USERNAME;
-            
-            const basicAuthToken = createBasicAuthToken(username, accessKey);
-            ctx.log.debug(`Basic auth token: ${basicAuthToken}`);
-            currentConnection = await listenToSmartUISSE(
-                ctx.env.SMARTUI_SSE_URL,
-                basicAuthToken,
-                (eventType, data) => {
-                    switch (eventType) {
-                        case 'open':
-                            ctx.log.debug('Connected to SSE server');
-                            retryCount = 0; 
-                            break;
-                            
-                        case 'connection':
-                            ctx.log.debug('Connection confirmed:', data);
-                            retryCount = 0; 
-                            break;
-                            
-                        case 'Dot_buildCompleted':
-                            ctx.log.debug('Build completed');
-                            console.log('Build completed');
-                            currentConnection?.abort();
-                            if(errorCount > 0) {
-                                process.exit(1);
-                            }
-                            process.exit(0);
+    try {
+        ctx.log.debug('Attempting SSE connection');
+        const accessKey = ctx.env.LT_ACCESS_KEY;
+        const username = ctx.env.LT_USERNAME;
+        
+        const basicAuthToken = createBasicAuthToken(username, accessKey);
+        ctx.log.debug(`Basic auth token: ${basicAuthToken}`);
+        currentConnection = await listenToSmartUISSE(
+            ctx.env.SMARTUI_SSE_URL,
+            basicAuthToken,
+            (eventType, data) => {
+                switch (eventType) {
+                    case 'open':
+                        ctx.log.debug('Connected to SSE server');
+                        break;
                         
-                        case 'DOTUIError':
-                            if (data.buildId== ctx.build.id) {
-                                errorCount++;
-                                console.error('Error in build:', data.message);
-                            }
-                            break;
-                            
-                        case 'error':
-                            ctx.log.debug('SSE Error occurred:', data);
-                            currentConnection?.abort();
-                            process.exit(0);
-                            
-                    }
+                    case 'connection':
+                        ctx.log.debug('Connection confirmed:', data);
+                        break;
+                        
+                    case 'Dot_buildCompleted':
+                        ctx.log.debug('Build completed');
+                        console.log('Build completed');
+                        currentConnection?.abort();
+                        if(errorCount > 0) {
+                            process.exit(1);
+                        }
+                        process.exit(0);
+                    
+                    case 'DOTUIError':
+                        if (data.buildId== ctx.build.id) {
+                            errorCount++;
+                            console.error('Error in build:', data.message);
+                        }
+                        break;
+                        
+                    case 'error':
+                        ctx.log.debug('SSE Error occurred:', data);
+                        currentConnection?.abort();
+                        process.exit(0);
+                        
                 }
-            );
-
-        } catch (error) {
-            ctx.log.debug(`Failed to start SSE listener (attempt ${retryCount + 1}):`, error);
-            retryCount++;
-            
-            if (retryCount < maxRetries) {
-                ctx.log.debug(`Retrying in 2 seconds...`);
-                setTimeout(connectWithRetry, 2000);
-            } else {
-                ctx.log.debug('Max retries reached. SSE listener failed.');
             }
-        }
-    };
-    
-    connectWithRetry();
+        );
+
+    } catch (error) {
+        ctx.log.debug('Failed to start SSE listener:', error);
+        throw error;
+    }
 }
