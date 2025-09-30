@@ -20,7 +20,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 if(ctx.env.LT_USERNAME&&ctx.env.LT_ACCESS_KEY) {
                     startSSEListener(ctx);
                 } else {
-                    console.log('LT_USERNAME and LT_ACCESS_KEY are not set, set them to display render errors');
+                    ctx.log.info('LT_USERNAME and LT_ACCESS_KEY are not set, set them to display render errors');
                 }
             }
 

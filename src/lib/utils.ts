@@ -864,20 +864,22 @@ export async function startSSEListener(ctx: Context) {
                         
                     case 'Dot_buildCompleted':
                         ctx.log.debug('Build completed');
-                        console.log('Build completed');
-                        currentConnection?.abort();
-                        break;
+                        ctx.log.info(chalk.green.bold('Build completed'));
+                        process.exit(0);
                     case 'DOTUIError':
                         if (data.buildId== ctx.build.id) {
                             errorCount++;
-                            console.error('Error in build:', data.message);
+                            ctx.log.info(chalk.red.bold(`Error in build: ${data.message}`));
                         }
                         break;
-                        
+                    case 'DOTUIWarning':
+                        if (data.buildId== ctx.build.id) {
+                            ctx.log.info(chalk.yellow.bold(`Warning in build: ${data.message}`));
+                        }
+                        break;
                     case 'error':
                         ctx.log.debug('SSE Error occurred:', data);
-                        currentConnection?.abort();
-                        break;
+                        process.exit(0);
                         
                 }
             }
