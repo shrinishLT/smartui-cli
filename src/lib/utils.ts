@@ -869,12 +869,12 @@ export async function startSSEListener(ctx: Context) {
                     case 'DOTUIError':
                         if (data.buildId== ctx.build.id) {
                             errorCount++;
-                            ctx.log.info(chalk.red.bold(`Error in build: ${data.message}`));
+                            ctx.log.info(chalk.red.bold(`Error: ${data.message}`));
                         }
                         break;
                     case 'DOTUIWarning':
                         if (data.buildId== ctx.build.id) {
-                            ctx.log.info(chalk.yellow.bold(`Warning in build: ${data.message}`));
+                            ctx.log.info(chalk.yellow.bold(`Warning: ${data.message}`));
                         }
                         break;
                     case 'error':
