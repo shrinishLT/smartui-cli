@@ -879,8 +879,8 @@ export async function startSSEListener(ctx: Context) {
                         break;
                     case 'error':
                         ctx.log.debug('SSE Error occurred:', data);
-                        process.exit(0);
-                        
+                        currentConnection?.abort();
+                        return;
                 }
             }
         );
