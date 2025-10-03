@@ -16,7 +16,7 @@ export default (ctx: Context): ListrTask<Context, ListrRendererFactory, ListrRen
                 }
             }
 
-            if(ctx.env.SHOW_RENDER_ERRORS && ctx.build && ctx.build.id) {
+            if((ctx.env.SHOW_RENDER_ERRORS||ctx.options.showRenderErrors||ctx.config.showRenderErrors) && ctx.build && ctx.build.id) {
                 if(ctx.env.LT_USERNAME&&ctx.env.LT_ACCESS_KEY) {
                     startSSEListener(ctx);
                 } else {

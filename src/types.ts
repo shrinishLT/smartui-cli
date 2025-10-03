@@ -43,6 +43,7 @@ export interface Context {
         loadDomContent?: boolean;
         approvalThreshold?: number;
         rejectionThreshold?: number;
+        showRenderErrors?: boolean
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -71,7 +72,8 @@ export interface Context {
         fetchResultsFileName?: string,
         baselineBranch?: string,
         baselineBuild?: string,
-        githubURL?: string
+        githubURL?: string,
+        showRenderErrors?: boolean
     }
     cliVersion: string;
     totalSnapshots: number;
