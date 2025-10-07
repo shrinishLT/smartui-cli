@@ -99,6 +99,11 @@ export async function prepareSnapshot(snapshot: Snapshot, ctx: Context): Promise
             }
         }
 
+        // Per-snapshot CSS override takes precedence when provided
+        if (typeof options.customCSS === 'string' && options.customCSS.trim().length > 0 ) {
+            processedOptions.customCSS = options.customCSS;
+        }
+
         if (options.element && Object.keys(options.element).length) {
             if (options.element.id) processedOptions.element = '#' + options.element.id;
             else if (options.element.class) processedOptions.element = '.' + options.element.class;
@@ -152,6 +157,11 @@ export async function prepareSnapshot(snapshot: Snapshot, ctx: Context): Promise
     }
     if (ctx.config.useExtendedViewport) {
         processedOptions.useExtendedViewport = true;
+    }
+
+    // Apply global CSS from config only when per-snapshot override is absent
+    if (!processedOptions.customCSS && typeof ctx.config.customCSS === 'string' && ctx.config.customCSS.trim().length > 0) {
+        processedOptions.customCSS = ctx.config.customCSS;
     }
 
     processedOptions.allowedAssets = ctx.config.allowedAssets;

@@ -44,6 +44,7 @@ export interface Context {
         approvalThreshold?: number;
         rejectionThreshold?: number;
         showRenderErrors?: boolean
+        customCSS?: string;
     };
     uploadFilePath: string;
     webStaticConfig: WebStaticConfig;
@@ -169,6 +170,7 @@ export interface Snapshot {
         approvalThreshold?: number;
         rejectionThreshold?: number;
         customCookies?: CustomCookie[];
+        customCSS?: string;
     }
 }
 

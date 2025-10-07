@@ -46,6 +46,33 @@ export default (options: Record<string, string>): Context => {
                 }
             }
 
+            // Resolve customCSS if provided: allow inline CSS or a relative/absolute .css file path
+            if (typeof (config as any).customCSS === 'string' && (config as any).customCSS.trim().length > 0) {
+                try {
+                    const cssValue = (config as any).customCSS.trim();
+                    const isLikelyPath = /\.css$/i.test(cssValue) || cssValue.startsWith('./') || cssValue.startsWith('../') || cssValue.startsWith('/')
+                    let resolvedCSS = cssValue;
+                    if (isLikelyPath) {
+                        const baseDir = require('path').dirname(options.config);
+                        const pathModule = require('path');
+                        const candidatePaths = [
+                            cssValue,
+                            pathModule.resolve(baseDir, cssValue)
+                        ];
+                        for (const candidate of candidatePaths) {
+                            if (fs.existsSync(candidate)) {
+                                resolvedCSS = fs.readFileSync(candidate, 'utf-8');
+                                break;
+                            }
+                        }
+                    }
+                    (config as any).customCSS = resolvedCSS;
+                } catch (e) {
+                    // If reading fails, keep original string to avoid blocking
+                    logger.debug(`Error reading custom CSS file: ${e}`);
+                }
+            }
+
             let validateConfigFn = options.scheduled ? validateConfigForScheduled : validateConfig;
 
             // validate config
@@ -155,7 +182,8 @@ export default (options: Record<string, string>): Context => {
             loadDomContent: loadDomContent,
             approvalThreshold: config.approvalThreshold,
             rejectionThreshold: config.rejectionThreshold,
-            showRenderErrors: config.showRenderErrors ?? false
+            showRenderErrors: config.showRenderErrors ?? false,
+            customCSS: (config as any).customCSS
         },
         uploadFilePath: '',
         webStaticConfig: [],
