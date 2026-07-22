@@ -19,13 +19,16 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
 
     - name: Remove pnpm-lock.yaml
       run: rm -rf pnpm-lock.yaml
 
     - name: Install pnpm
       run: npm install -g pnpm@10
+
+    - name: Update npm for OIDC trusted publishing (requires npm >= 11.5.1)
+      run: npm install -g npm@11
 
     - name: Install dependencies
       run: pnpm install
@@ -43,10 +46,10 @@ jobs:
       if: steps.check-beta.outputs.IS_BETA == 'true'
       run: |
         pnpm run build
-        pnpm publish --tag beta --access public --provenance --no-git-checks
+        npm publish --tag beta --access public --provenance
 
     - name: Release stable package
       if: steps.check-beta.outputs.IS_BETA == 'false'
       run: |
         pnpm run build
-        pnpm publish --access public --provenance --no-git-checks
+        npm publish --access public --provenance
