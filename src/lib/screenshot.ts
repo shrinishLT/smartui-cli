@@ -155,8 +155,10 @@ async function captureScreenshotsForConfig(
 
     try {
         const browser = browsers[browserName];
+        ctx.log.debug(`[hangRCA] ${browserName}: newContext start`);
         context = await browser?.newContext(contextOptions);
         page = await context?.newPage();
+        ctx.log.debug(`[hangRCA] ${browserName}: newContext/newPage done`);
 
         if (beforeNavigationScript && beforeNavigationScript !== "") {
             const wrappedScript = new Function('page', `
@@ -289,7 +291,9 @@ async function captureScreenshotsForConfig(
             globalBrowser = constants.WEBKIT;
         }
 
+        ctx.log.debug(`[hangRCA] ${browserName}: initial goto start`);
         await page?.goto(url.trim(), pageOptions);
+        ctx.log.debug(`[hangRCA] ${browserName}: initial goto done`);
         await executeDocumentScripts(ctx, page, "afterNavigation", afterNavigationScript)
 
         let viewportErrors: Array<{ viewportString: string, error: any }> = [];
@@ -303,9 +307,12 @@ async function captureScreenshotsForConfig(
                     globalBrowser = constants.WEBKIT;
                 }
                 let ssPath = `screenshots/${ssId}/${`${browserName}-${viewport.width}x${viewport.height}`}-${ssId}.png`;
+                ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: setViewportSize start`);
                 await page?.setViewportSize({ width: viewport.width, height: viewport.height || constants.MIN_VIEWPORT_HEIGHT });
                 // again load page to apply viewport size properly
+                ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: viewport goto start`);
                 await page?.goto(url.trim(), pageOptions);
+                ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: viewport goto done (url now: ${page?.url()})`);
                 ctx.log.debug(`Capturing screenshot for URL: ${url} on ${browserName} with viewport: ${viewportString} (fullPage: ${fullPage})`);
                 if (page && ctx.config.lazyLoadConfiguration) {
                     await humanLikeScroll(page);
@@ -317,13 +324,19 @@ async function captureScreenshotsForConfig(
                         let maxScrollsValue = ctx.config.lazyLoadConfiguration.maxScrolls || 50;
                         let jumpBackToTopValue = ctx.config.lazyLoadConfiguration.jumpBackToTop !== false;
                         ctx.log.debug('Capture: Starting lazy load scrolling with configuration: ' + JSON.stringify({ step: stepValue, delay: delayValue, maxScrolls: maxScrollsValue, jumpBackToTop: jumpBackToTopValue }));
+                        ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: lazy scroll evaluate start`);
                         await page?.evaluate(utils.smoothScrollToBottom, { step: stepValue, delay: delayValue, maxScrolls: maxScrollsValue, jumpBackToTop: jumpBackToTopValue });
+                        ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: lazy scroll evaluate done`);
                         ctx.log.debug('Capture: Completed lazy load scrolling');
                     } else {
+                        ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: scroll evaluate start`);
                         await page?.evaluate(utils.scrollToBottomAndBackToTop, { frequency: 100, timing: ctx.config.scrollTime });
+                        ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: scroll evaluate done`);
                     }
                 }
+                ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: waitForTimeout(${waitForTimeout || 0}) start`);
                 await page?.waitForTimeout(waitForTimeout || 0);
+                ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: waitForTimeout done`);
                 await executeDocumentScripts(ctx, page, "beforeSnapshot", beforeSnapshotScript)
 
                 discoveryErrors.name = name;
@@ -333,7 +346,9 @@ async function captureScreenshotsForConfig(
                 // Try full-page screenshot first; if it fails due to the software-rendering
                 // texture limit on headless Linux (32767px), retry with capped height.
                 try {
+                    ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: screenshot start`);
                     await page?.screenshot({ path: ssPath, fullPage });
+                    ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: screenshot done`);
                 } catch (screenshotError: any) {
                     const isTextureLimitError = screenshotError?.message?.includes(constants.SCREENSHOT_TOO_LARGE_ERROR);
                     if (fullPage && page && isTextureLimitError) {
@@ -349,7 +364,9 @@ async function captureScreenshotsForConfig(
                     }
                 }
 
+                ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: upload start`);
                 await ctx.client.uploadScreenshot(ctx.build, ssPath, name, browserName, viewportString, url, ctx.log, discoveryErrors, ctx);
+                ctx.log.debug(`[hangRCA] ${browserName} ${viewportString}: upload done`);
                 discoveryErrors = {
                     name: "",
                     url: "",
@@ -368,11 +385,14 @@ async function captureScreenshotsForConfig(
         } else if (viewportErrors.length > 0) {
             ctx.log.warn(`${viewportErrors.length}/${renderViewports.length} viewport(s) failed for browser ${browserName} on URL ${url}: ${viewportErrors.map(e => e.viewportString).join(', ')}`);
         }
+        ctx.log.debug(`[hangRCA] ${browserName}: all viewports processed`);
     } catch (error) {
         throw new Error(`captureScreenshotsForConfig failed for browser ${browserName}; error: ${error}`);
     } finally {
+        ctx.log.debug(`[hangRCA] ${browserName}: closing page/context`);
         await page?.close();
         await context?.close();
+        ctx.log.debug(`[hangRCA] ${browserName}: page/context closed`);
     }
 
 }
