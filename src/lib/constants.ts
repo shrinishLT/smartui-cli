@@ -165,6 +165,11 @@ export default {
     // Default page load time
     DEFAULT_PAGE_LOAD_TIMEOUT: 180000,
 
+    // Teardown cap: a crashed target never resolves page/context close, which would strand the
+    // capture and block finalizeBuild. Independent of the page-load/scroll waits — the page is
+    // already done being used here, so this only needs to cover a healthy close.
+    BROWSER_CLOSE_TIMEOUT: 15000,
+
     // Magic Numbers 
     MAGIC_NUMBERS: [
         { ext: 'jpg', magic: Buffer.from([0xFF, 0xD8, 0xFF]) },

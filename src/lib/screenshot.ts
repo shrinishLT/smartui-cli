@@ -390,9 +390,21 @@ async function captureScreenshotsForConfig(
         throw new Error(`captureScreenshotsForConfig failed for browser ${browserName}; error: ${error}`);
     } finally {
         ctx.log.debug(`[hangRCA] ${browserName}: closing page/context`);
-        await page?.close();
-        await context?.close();
-        ctx.log.debug(`[hangRCA] ${browserName}: page/context closed`);
+        // A crashed target (e.g. WebKit after "Page crashed") never resolves close(); abandoning it
+        // is safe because closeBrowsers() kills the browser process afterwards.
+        const closed = await Promise.race([
+            (async () => { await page?.close(); await context?.close(); return true; })().catch(() => true),
+            new Promise<boolean>(resolve => {
+                const timer = setTimeout(() => resolve(false), constants.BROWSER_CLOSE_TIMEOUT);
+                (timer as any).unref?.();
+            })
+        ]);
+        if (closed) {
+            ctx.log.debug(`[hangRCA] ${browserName}: page/context closed`);
+        } else {
+            ctx.log.warn(`${browserName}: page/context close timed out after ${constants.BROWSER_CLOSE_TIMEOUT}ms; abandoning it (browser is force-closed later)`);
+            ctx.log.debug(`[hangRCA] ${browserName}: page/context close ABANDONED`);
+        }
     }
 
 }
