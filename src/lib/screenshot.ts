@@ -194,6 +194,15 @@ async function captureScreenshotsForConfig(
 
         const targetHostname = new URL(url).hostname;
 
+        // [rateProbe] Count requests hitting the target origin and flag WAF block pages, so the
+        // effective rate limit can be derived from a real run. Counting only; no interception.
+        const probeStart = Date.now();
+        let originRequests = 0;
+        const probeRootDomain = targetHostname.split('.').slice(-2).join('.');
+        page.on('request', req => {
+            try { if (new URL(req.url()).hostname.endsWith(probeRootDomain)) originRequests++; } catch { /* ignore */ }
+        });
+
         if (ctx.env.CAPTURE_RENDERING_ERRORS) {
             await page.route('**/*', async (route, request) => {
                 const requestUrl = request.url()
@@ -349,6 +358,25 @@ async function captureScreenshotsForConfig(
                     }
                 }
 
+                // [rateProbe] classify what was actually captured, so the request count at which the
+                // WAF starts blocking is visible in the log.
+                try {
+                    const probe = await page?.evaluate(() => {
+                        const text = document.body ? document.body.innerText : '';
+                        return {
+                            textLen: text.length,
+                            height: document.documentElement.scrollHeight,
+                            wafIframe: !!document.querySelector('iframe[src*="_Incapsula_Resource"], iframe[src*="Incapsula"]'),
+                            wafText: /Request unsuccessful|Incapsula|Access denied|Error 15|Additional security check|security check is required/i.test(text)
+                        };
+                    });
+                    const elapsed = (Date.now() - probeStart) / 1000;
+                    const blocked = !!(probe && (probe.wafIframe || probe.wafText || probe.textLen < 200));
+                    ctx.log.debug(`[rateProbe] ${browserName} ${viewportString} blocked=${blocked} originRequests=${originRequests} elapsed=${elapsed.toFixed(1)}s rps=${(originRequests / Math.max(elapsed, 1)).toFixed(2)} pageHeight=${probe?.height} textLen=${probe?.textLen} wafIframe=${probe?.wafIframe} wafText=${probe?.wafText}`);
+                } catch (probeError: any) {
+                    ctx.log.debug(`[rateProbe] ${browserName} ${viewportString} probe failed: ${probeError?.message?.split('\n')[0]}`);
+                }
+
                 await ctx.client.uploadScreenshot(ctx.build, ssPath, name, browserName, viewportString, url, ctx.log, discoveryErrors, ctx);
                 discoveryErrors = {
                     name: "",
@@ -368,6 +396,7 @@ async function captureScreenshotsForConfig(
         } else if (viewportErrors.length > 0) {
             ctx.log.warn(`${viewportErrors.length}/${renderViewports.length} viewport(s) failed for browser ${browserName} on URL ${url}: ${viewportErrors.map(e => e.viewportString).join(', ')}`);
         }
+        ctx.log.debug(`[rateProbe] SUMMARY ${browserName} url=${url} totalOriginRequests=${originRequests} totalElapsed=${((Date.now() - probeStart) / 1000).toFixed(1)}s viewportsFailed=${viewportErrors.length}/${renderViewports.length}`);
     } catch (error) {
         throw new Error(`captureScreenshotsForConfig failed for browser ${browserName}; error: ${error}`);
     } finally {
