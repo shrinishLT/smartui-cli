@@ -134,15 +134,19 @@ async function captureScreenshotsForConfig(
         ctx.log.debug(`Failed resolving tunnel/proxy details: ${e}`);
     }
     let page: Page;
+    // Only Chromium needs a UA override — its headless default announces "HeadlessChrome", which
+    // bot-protection WAFs block on. Firefox/WebKit defaults are already correct for the bundled
+    // build, so overriding them with a hardcoded (and quickly stale) string only creates a
+    // version mismatch between the UA and the engine's real fingerprint.
+    let chromiumMajor = '';
     if (!ctx.env.DO_NOT_USE_USER_AGENT) {
-      if (browserName == constants.CHROME)
-        contextOptions.userAgent = constants.CHROME_USER_AGENT;
-      else if (browserName == constants.FIREFOX)
-        contextOptions.userAgent = constants.FIREFOX_USER_AGENT;
-      else if (browserName == constants.SAFARI)
-        contextOptions.userAgent = constants.SAFARI_USER_AGENT;
-      else if (browserName == constants.EDGE)
-        contextOptions.userAgent = constants.EDGE_USER_AGENT;
+      if (utils.isChromiumEngine(browserName)) {
+        const fullVersion = browsers[browserName]?.version() || '';
+        chromiumMajor = fullVersion.split('.')[0] || '';
+        contextOptions.userAgent = browserName == constants.EDGE
+          ? utils.buildEdgeUserAgent(fullVersion)
+          : utils.buildChromeUserAgent(fullVersion);
+      }
       if (ctx.config.userAgent || userAgent) {
         if (ctx.config.userAgent !== "") {
           contextOptions.userAgent = ctx.config.userAgent;
@@ -170,7 +174,9 @@ async function captureScreenshotsForConfig(
         const headersObject: Record<string, string> = {};
         // Seed a clean Sec-CH-UA on Chromium so headless "HeadlessChrome" doesn't leak to bot WAFs.
         if (utils.isChromiumEngine(browserName)) {
-            Object.assign(headersObject, constants.REQUEST_HEADERS);
+            Object.assign(headersObject, constants.REQUEST_HEADERS, {
+                'sec-ch-ua': utils.buildSecChUa(chromiumMajor, browserName == constants.EDGE)
+            });
         }
         if (ctx.config.requestHeaders && Array.isArray(ctx.config.requestHeaders)) {
             ctx.config.requestHeaders.forEach((headerObj) => {

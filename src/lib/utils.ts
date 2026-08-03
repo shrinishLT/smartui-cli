@@ -135,6 +135,26 @@ export async function closeBrowsers(browsers: Record<string, Browser>): Promise<
     for (const browserName of Object.keys(browsers)) await browsers[browserName]?.close();
 }
 
+// Build UA / client hints from the browser actually in use, so the version we announce matches the
+// engine fingerprint. Falls back to the static constants when the version is unavailable.
+export function buildChromeUserAgent(fullVersion: string): string {
+    if (!fullVersion) return constants.CHROME_USER_AGENT;
+    return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${fullVersion} Safari/537.36`;
+}
+
+export function buildEdgeUserAgent(fullVersion: string): string {
+    if (!fullVersion) return constants.EDGE_USER_AGENT;
+    return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${fullVersion} Safari/537.36 Edg/${fullVersion}`;
+}
+
+// Real Chromium sends brands matching its own major version; Edge additionally advertises itself.
+export function buildSecChUa(major: string, isEdge: boolean): string {
+    if (!major) return constants.REQUEST_HEADERS['sec-ch-ua'];
+    return isEdge
+        ? `"Chromium";v="${major}", "Microsoft Edge";v="${major}", "Not=A?Brand";v="8"`
+        : `"Chromium";v="${major}", "Google Chrome";v="${major}", "Not=A?Brand";v="8"`;
+}
+
 // Rendering-engine classification for a capture browserName (android→chrome, iOS→safari upstream).
 export function isChromiumEngine(browserName: string): boolean {
     return browserName === constants.CHROME || browserName === constants.EDGE;
